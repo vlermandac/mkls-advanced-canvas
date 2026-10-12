@@ -1,0 +1,359 @@
+{
+  "config": {
+    "vault": "<workspace>/planning/advanced-canvas/evidence/MKLS Canvas QA",
+    "fixture": "Bench/Bench-sparse-1000-2026-10-12T22-03-06-813Z.canvas",
+    "fixtureSha256": "4297120144be9e8bfff0b23a04a90613e8be9de59559a7c6e3b11888b40ef3ed",
+    "expected": {
+      "nodes": 1000,
+      "edges": 3000
+    },
+    "reportPath": "<workspace>/planning/advanced-canvas/evidence/bench/overview-paired/overview-probe.json",
+    "rounds": 1,
+    "frames": 120
+  },
+  "startedAt": "2026-10-12T22:23:18.681Z",
+  "phases": {
+    "idleBaseline": {
+      "count": 60,
+      "p50": 3.599999999627471,
+      "p95": 3.6000000005587935,
+      "max": 3.7000000001862645,
+      "mean": 3.5700000000031045,
+      "over16_7": 0,
+      "over33": 0
+    },
+    "warmup": {
+      "settle": {
+        "ms": 3023,
+        "timedOut": false
+      },
+      "sweep": {
+        "count": 120,
+        "p50": 85.69999999925494,
+        "p95": 107.20000000018626,
+        "max": 239.29999999981374,
+        "mean": 84.4325000000031,
+        "over16_7": 118,
+        "over33": 117
+      },
+      "fitZoom": -4
+    },
+    "cleanup": {
+      "styleRemoved": true,
+      "attributeRemoved": true
+    },
+    "preservation": {
+      "before": {
+        "graph": "259532580d5c70755390b652970063da1a7ad00ffcc056fbd217bb0ff709bfb3",
+        "disk": "4297120144be9e8bfff0b23a04a90613e8be9de59559a7c6e3b11888b40ef3ed",
+        "history": 1,
+        "current": 0
+      },
+      "after": {
+        "graph": "259532580d5c70755390b652970063da1a7ad00ffcc056fbd217bb0ff709bfb3",
+        "disk": "4297120144be9e8bfff0b23a04a90613e8be9de59559a7c6e3b11888b40ef3ed",
+        "history": 1,
+        "current": 0
+      },
+      "graphUnchanged": true,
+      "diskUnchanged": true,
+      "historyUnchanged": true,
+      "diskMatchesFixture": true
+    }
+  },
+  "variants": [
+    {
+      "index": 0,
+      "variant": "baseline",
+      "valid": true,
+      "counts": {
+        "displayPaths": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 1988
+        },
+        "interactionPaths": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 1988
+        },
+        "arrowheads": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 1988
+        },
+        "nodes": {
+          "present": 651,
+          "sampled": 400,
+          "estimatedRendered": 651
+        },
+        "zoomedOutClass": true
+      },
+      "focus": {
+        "before": {
+          "sameDocumentAsGlobal": true,
+          "visibility": "visible",
+          "documentHasFocus": true,
+          "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out",
+          "windowFocused": true,
+          "webContentsFocused": true
+        },
+        "after": {
+          "sameDocumentAsGlobal": true,
+          "visibility": "visible",
+          "documentHasFocus": true,
+          "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out",
+          "windowFocused": true,
+          "webContentsFocused": true
+        }
+      },
+      "idleCadenceBefore": {
+        "count": 30,
+        "p50": 3.599999999627471,
+        "p95": 3.7000000001862645,
+        "max": 3.7000000001862645,
+        "mean": 3.569999999987582,
+        "over16_7": 0,
+        "over33": 0
+      },
+      "frames": {
+        "count": 120,
+        "p50": 89.19999999925494,
+        "p95": 107.09999999962747,
+        "max": 128.59999999962747,
+        "mean": 84.61083333333954,
+        "over16_7": 118,
+        "over33": 118
+      },
+      "longTasks": {
+        "count": 56,
+        "totalMs": 3267,
+        "max": 78
+      }
+    },
+    {
+      "index": 1,
+      "variant": "edge-lod",
+      "valid": true,
+      "counts": {
+        "displayPaths": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 1988
+        },
+        "interactionPaths": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 0
+        },
+        "arrowheads": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 0
+        },
+        "nodes": {
+          "present": 651,
+          "sampled": 400,
+          "estimatedRendered": 651
+        },
+        "zoomedOutClass": true
+      },
+      "focus": {
+        "before": {
+          "sameDocumentAsGlobal": true,
+          "visibility": "visible",
+          "documentHasFocus": true,
+          "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out",
+          "windowFocused": true,
+          "webContentsFocused": true
+        },
+        "after": {
+          "sameDocumentAsGlobal": true,
+          "visibility": "visible",
+          "documentHasFocus": true,
+          "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out",
+          "windowFocused": true,
+          "webContentsFocused": true
+        }
+      },
+      "idleCadenceBefore": {
+        "count": 30,
+        "p50": 3.599999999627471,
+        "p95": 3.699999999254942,
+        "max": 3.7000000001862645,
+        "mean": 3.573333333339542,
+        "over16_7": 0,
+        "over33": 0
+      },
+      "frames": {
+        "count": 120,
+        "p50": 67.90000000037253,
+        "p95": 82.20000000018626,
+        "max": 121.5,
+        "mean": 66.78416666667133,
+        "over16_7": 118,
+        "over33": 117
+      },
+      "longTasks": {
+        "count": 6,
+        "totalMs": 324,
+        "max": 62
+      }
+    },
+    {
+      "index": 2,
+      "variant": "no-edges",
+      "valid": true,
+      "counts": {
+        "displayPaths": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 0
+        },
+        "interactionPaths": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 0
+        },
+        "arrowheads": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 0
+        },
+        "nodes": {
+          "present": 651,
+          "sampled": 400,
+          "estimatedRendered": 651
+        },
+        "zoomedOutClass": true
+      },
+      "focus": {
+        "before": {
+          "sameDocumentAsGlobal": true,
+          "visibility": "visible",
+          "documentHasFocus": true,
+          "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out",
+          "windowFocused": true,
+          "webContentsFocused": true
+        },
+        "after": {
+          "sameDocumentAsGlobal": true,
+          "visibility": "visible",
+          "documentHasFocus": true,
+          "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out",
+          "windowFocused": true,
+          "webContentsFocused": true
+        }
+      },
+      "idleCadenceBefore": {
+        "count": 30,
+        "p50": 3.599999999627471,
+        "p95": 3.6000000005587935,
+        "max": 3.699999999254942,
+        "mean": 3.566666666666667,
+        "over16_7": 0,
+        "over33": 0
+      },
+      "frames": {
+        "count": 120,
+        "p50": 60.799999999813735,
+        "p95": 82,
+        "max": 103.5,
+        "mean": 60.684166666663565,
+        "over16_7": 118,
+        "over33": 115
+      },
+      "longTasks": {
+        "count": 2,
+        "totalMs": 107,
+        "max": 54
+      }
+    },
+    {
+      "index": 3,
+      "variant": "baseline",
+      "valid": true,
+      "counts": {
+        "displayPaths": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 1988
+        },
+        "interactionPaths": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 1988
+        },
+        "arrowheads": {
+          "present": 1988,
+          "sampled": 400,
+          "estimatedRendered": 1988
+        },
+        "nodes": {
+          "present": 651,
+          "sampled": 400,
+          "estimatedRendered": 651
+        },
+        "zoomedOutClass": true
+      },
+      "focus": {
+        "before": {
+          "sameDocumentAsGlobal": true,
+          "visibility": "visible",
+          "documentHasFocus": true,
+          "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out",
+          "windowFocused": true,
+          "webContentsFocused": true
+        },
+        "after": {
+          "sameDocumentAsGlobal": true,
+          "visibility": "visible",
+          "documentHasFocus": true,
+          "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out",
+          "windowFocused": true,
+          "webContentsFocused": true
+        }
+      },
+      "idleCadenceBefore": {
+        "count": 30,
+        "p50": 3.599999999627471,
+        "p95": 3.6000000005587935,
+        "max": 3.7000000001862645,
+        "mean": 3.573333333339542,
+        "over16_7": 0,
+        "over33": 0
+      },
+      "frames": {
+        "count": 120,
+        "p50": 85.69999999925494,
+        "p95": 117.8999999994412,
+        "max": 167.79999999981374,
+        "mean": 85.20750000000311,
+        "over16_7": 118,
+        "over33": 117
+      },
+      "longTasks": {
+        "count": 54,
+        "totalMs": 3241,
+        "max": 90
+      }
+    }
+  ],
+  "warnings": [],
+  "failures": [],
+  "environment": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) obsidian/1.14.4 Chrome/150.0.7871.250 Electron/43.7.9 Safari/537.36",
+    "window": {
+      "width": 1119,
+      "height": 1000,
+      "devicePixelRatio": 1
+    },
+    "enabledPlugins": [
+      "mkls-advanced-canvas"
+    ],
+    "pluginVersions": {
+      "mkls-advanced-canvas": "7.1.0-mkls.1"
+    }
+  },
+  "finishedAt": "2026-10-12T22:24:16.393Z"
+}

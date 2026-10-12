@@ -3,7 +3,12 @@ import { CanvasNodeData } from "src/@types/AdvancedJsonCanvas"
 import BBoxHelper from "src/utils/bbox-helper"
 import CanvasHelper from "src/utils/canvas-helper"
 import CanvasExtension from "../canvas-extension"
-import EdgePathfindingMethod from "./edge-pathfinding-methods/edge-pathfinding-method"
+import EdgePathfindingMethod, { EdgePath } from "./edge-pathfinding-methods/edge-pathfinding-method"
+// Codex (LLM agent): pan-only renders reuse routes; model revisions invalidate them.
+import { canvasImports } from 'src/utils/import-coordinator'
+const routeCache = new WeakMap<CanvasEdge, { key: string; path: EdgePath | null; retryAt?: number }>()
+const routeStats = new WeakMap<Canvas, { computations: number; cacheHits: number; timeouts: number }>()
+const routeContexts = new WeakMap<Canvas, { revision: number; collapsed: boolean }>()
 import EdgePathfindingAStar from "./edge-pathfinding-methods/pathfinding-a-star"
 import EdgePathfindingDirect from "./edge-pathfinding-methods/pathfinding-direct"
 import EdgePathfindingSquare from "./edge-pathfinding-methods/pathfinding-square"
@@ -22,6 +27,7 @@ const EDGE_PATHFINDING_METHODS: { [key: string]: typeof EdgePathfindingMethod } 
 
 const MAX_LIVE_UPDATE_SELECTION_SIZE = 5
 export default class EdgeStylesExtension extends CanvasExtension {
+  getRouteStats(canvas: Canvas) { return routeStats.get(canvas) ?? { computations: 0, cacheHits: 0, timeouts: 0 } }
   cssStylesManager: CssStylesConfigManager<StyleAttribute>
 
   isEnabled() { return 'edgesStylingFeatureEnabled' as const }
@@ -160,12 +166,23 @@ export default class EdgeStylesExtension extends CanvasExtension {
         edge.bezier.to
 
       const PathfindingConstructor = EDGE_PATHFINDING_METHODS[pathfindingMethod] as new (...args: ConstructorParameters<typeof EdgePathfindingMethod>) => EdgePathfindingMethod
-      const path = new PathfindingConstructor(
-        this.plugin,
-        canvas,
-        fromNodeBBox, fromPos, fromBBoxSidePos, edge.from.side,
-        toNodeBBox, toPos, toBBoxSidePos, edge.to.side
-      ).getPath()
+      const revision = canvasImports.currentRevision(canvas)
+      let context = routeContexts.get(canvas)
+      if (context?.revision !== revision) { context = { revision, collapsed: [...canvas.nodes.values()].some(node => !!(node.getData() as CanvasNodeData & { collapsed?: boolean }).collapsed) }; routeContexts.set(canvas, context) }
+      let stats = routeStats.get(canvas)
+      if (!stats) routeStats.set(canvas, stats = { computations: 0, cacheHits: 0, timeouts: 0 })
+      const key = JSON.stringify([revision, canvas.zoom, pathfindingMethod, fromNodeBBox, fromPos, edge.from.side, toNodeBBox, toPos, edge.to.side,
+        this.plugin.settings.getSetting('edgeStylePathfinderAllowDiagonal'), this.plugin.settings.getSetting('edgeStylePathfinderPathRounded'), this.plugin.settings.getSetting('edgeStyleSquarePathRounded')])
+      let cached = routeCache.get(edge)
+      if (cached?.key !== key || (cached.retryAt !== undefined && performance.now() >= cached.retryAt) || context.collapsed) {
+        const finder = new PathfindingConstructor(this.plugin, canvas, fromNodeBBox, fromPos, fromBBoxSidePos, edge.from.side, toNodeBBox, toPos, toBBoxSidePos, edge.to.side)
+        const path = finder.getPath(); stats.computations++
+        const timedOut = finder instanceof EdgePathfindingAStar && finder.timedOut
+        if (timedOut) stats.timeouts++
+        // Collapsed obstacle boxes depend on DOM measurements; do not freeze them.
+        cached = { key, path, retryAt: timedOut ? performance.now() + 1000 : undefined }; routeCache.set(edge, cached)
+      } else stats.cacheHits++
+      const path = cached.path
       if (!path) return
 
       edge.center = path.center

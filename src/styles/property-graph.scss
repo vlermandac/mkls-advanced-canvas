@@ -1,0 +1,17 @@
+// Authored by Codex (LLM agent): functional visibility and source editing only.
+.mkls-view-hidden { display: none !important; pointer-events: none !important; }
+.mkls-source-editor, .mkls-filter-editor { width: 100%; min-height: 180px; font-family: var(--font-monospace); }
+.mkls-frontmatter-panel {
+  position: absolute; bottom: calc(100% + 4px); left: 0; z-index: 10;
+  width: 100%; min-width: 220px; padding: 6px; background: var(--background-secondary);
+}
+.mkls-frontmatter-text { width: 100%; min-height: 65px; font-family: var(--font-monospace); }
+.mkls-frontmatter-delimiter { font-family: var(--font-monospace); }
+.mkls-view-select { max-width: 180px; }
+
+// Codex (LLM agent): rendering-only option; native overview class clears on zoom-in.
+.canvas-wrapper[data-lightweight-overview-enabled="true"].mod-zoomed-out {
+  .canvas-edges path.canvas-interaction-path,
+  .canvas-edges polygon.canvas-path-end { display: none !important; }
+  .canvas-edges path { transition: none !important; }
+}

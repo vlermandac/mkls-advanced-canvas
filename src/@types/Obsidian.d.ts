@@ -20,6 +20,8 @@ export type ExtendedMetadataCache = obsidian.MetadataCache
 export type ExtendedVault = obsidian.Vault
 
 export interface ExtendedCachedMetadata extends obsidian.CachedMetadata {
+  // Codex (LLM agent): invalidate older caches without stable file-node IDs.
+  mklsMetadataVersion?: number
   links?: ExtendedLinkCache[]
   embeds?: ExtendedEmbedCache[]
   nodes?: NodesCache

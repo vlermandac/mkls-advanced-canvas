@@ -1,16 +1,28 @@
+// MKLS changes authored by Codex (LLM agent): transaction boundaries and disposal.
 /* eslint-disable-next-line import/no-extraneous-dependencies -- Included in Obsidian */
 import { EditorView, ViewUpdate } from "@codemirror/view"
+import { deferElementSave, isTransactionActive } from '../property-graph/transaction'
 import { around } from "monkey-around"
-import { editorInfoField, requireApiVersion, Side, WorkspaceLeaf } from "obsidian"
+import { editorInfoField, requireApiVersion, Side, WorkspaceLeaf, Notice } from "obsidian"
+import { canvasImports } from '../utils/import-coordinator'
 import { CanvasData, CanvasEdgeData, CanvasNodeData } from "src/@types/AdvancedJsonCanvas"
+import type { ExtendedCachedMetadata } from "src/@types/Obsidian"
 import { BBox, Canvas, CanvasEdge, CanvasElement, CanvasElementsData, CanvasEphemeralState, CanvasNode, CanvasPopupMenu, CanvasView, CanvasWorkspaceLeaf, NodeInteractionLayer, Position, SelectionData } from "src/@types/Canvas"
 import BBoxHelper from "src/utils/bbox-helper"
 import MigrationHelper from "src/utils/migration-helper"
 import JSONC from "tiny-jsonc"
 import Patcher, { invoke } from "./patcher"
 
+const geometryRevisions = new WeakMap<object, string>()
+function geometrySignature(element: CanvasNode | CanvasEdge): string {
+  return 'from' in element ? JSON.stringify([element.from.node.id, element.from.side, element.from.end, element.to.node.id, element.to.side, element.to.end]) : JSON.stringify([element.x, element.y, element.width, element.height])
+}
+
 export default class CanvasPatcher extends Patcher {
   protected async patch() {
+    this.plugin.register(() => {
+      for (const element of [...this.elementUninstallers.keys()]) this.uninstallNodeElementPatches(element)
+    })
     // Check if there are already loaded canvas view leafs
     const loadedCanvasViewLeafs = this.plugin.app.workspace.getLeavesOfType("canvas")
       .filter((leaf: WorkspaceLeaf) => !requireApiVersion('1.7.2') || !leaf.isDeferred)
@@ -35,12 +47,18 @@ export default class CanvasPatcher extends Patcher {
 
     // Patch canvas view
     Patcher.patchPrototype<CanvasView>(this.plugin, view, {
+      // Native getViewData serializes canvas.data, not the live Maps. Refresh
+      // that root only when serializing, preserving batched/debounced saves.
+      getViewData: Patcher.OverrideExisting(next => function (): string {
+        Reflect.set(this.canvas, 'data', this.canvas.getData()) // Write-only native serializer cache.
+        return invoke(next, this)
+      }),
       setEphemeralState: Patcher.OverrideExisting(next => function (state: unknown): void {
         const s = state as CanvasEphemeralState
         // Select and zoom to the node if it exists (Link subpath)
         if (s?.subpath) {
           const nodeId = (s.subpath).replace(/^#/, '')
-          const node = this.canvas.nodes.get(nodeId)
+          const node = this.canvas.nodes.get(nodeId) ?? this.canvas.edges.get(nodeId)
 
           if (node) {
             this.canvas.selectOnly(node)
@@ -49,14 +67,23 @@ export default class CanvasPatcher extends Patcher {
           }
         }
 
-        // Select and zoom to the node if match exists (backlink) but no nodeId is specified (metadataCache limitation) - if nodeId exists, it comes from search
-        if (s.match?.matches?.[0] && !s.match?.nodeId) {
+        // Codex (LLM agent): prefer IDs; cached backlink positions retain their
+        // source IDs even when the live model has been reordered or filtered.
+        const stableId = s.match?.nodeId ?? s.match?.edgeId
+        if (stableId) {
+          const element = this.canvas.nodes.get(stableId) ?? this.canvas.edges.get(stableId)
+          if (element) { this.canvas.selectOnly(element); this.canvas.zoomToSelection(); return }
+        }
+        if (s.match?.matches?.[0] && !stableId) {
           const match = s.match.matches[0]
 
           const elementType = match[0] === 0 ? 'nodes' : 'edges' // Misuse start offset as element type indicator
           const elementIndex = match[1] // Misuse end offset as element index
 
-          const element = elementType === 'nodes' ?
+          const cache = that.plugin.app.metadataCache.getFileCache(this.file) as ExtendedCachedMetadata | null
+          const references = [...(cache?.links ?? []), ...(cache?.embeds ?? [])]
+          const cachedId = references.find(ref => ref.position.start.offset === match[0] && ref.position.end.offset === match[1])?.position.nodeId
+          const element = cachedId ? this.canvas.nodes.get(cachedId) : elementType === 'nodes' ?
             Array.from(this.canvas.nodes.values())[elementIndex] :
             Array.from(this.canvas.edges.values())[elementIndex]
 
@@ -117,6 +144,11 @@ export default class CanvasPatcher extends Patcher {
         return result
       }),
       markMoved: Patcher.OverrideExisting(next => function (node: CanvasNode): void {
+        // Marking a bbox dirty is also used for layout-only refreshes. Count
+        // geometry changes, not a redundant notification after group collapse.
+        const signature = geometrySignature(node), previous = geometryRevisions.get(node)
+        if (previous !== undefined && previous !== signature) canvasImports.changed(this)
+        geometryRevisions.set(node, signature)
         const result = invoke(next, this, node)
 
         if (!this.viewportChanged) {
@@ -192,21 +224,27 @@ export default class CanvasPatcher extends Patcher {
         return node
       }),
       addNode: Patcher.OverrideExisting(next => function (node: CanvasNode): void {
+        canvasImports.changed(this)
+        geometryRevisions.set(node, geometrySignature(node))
         that.patchNode(node)
         return invoke(next, this, node)
       }),
       addEdge: Patcher.OverrideExisting(next => function (edge: CanvasEdge): void {
+        canvasImports.changed(this)
+        geometryRevisions.set(edge, geometrySignature(edge))
         that.patchEdge(edge)
         if (!this.viewportChanged) that.plugin.app.workspace.trigger('advanced-canvas:edge-created', this, edge)
         return invoke(next, this, edge)
       }),
       removeNode: Patcher.OverrideExisting(next => function (node: CanvasNode): void {
+        canvasImports.changed(this)
         that.uninstallNodeElementPatches(node)
         const result = invoke(next, this, node)
         if (!this.isClearing) that.plugin.app.workspace.trigger('advanced-canvas:node-removed', this, node)
         return result
       }),
       removeEdge: Patcher.OverrideExisting(next => function (edge: CanvasEdge): void {
+        canvasImports.changed(this)
         that.uninstallNodeElementPatches(edge)
         const result = invoke(next, this, edge)
         if (!this.isClearing) that.plugin.app.workspace.trigger('advanced-canvas:edge-removed', this, edge)
@@ -279,12 +317,12 @@ export default class CanvasPatcher extends Patcher {
         this.isClearing = false
         return result
       }),
-      /*setData: Patcher.OverrideExisting(next => function (...args: any): void {
-        //
-        const result = invoke(next, this, ...args)
-        //
+      // Rebind metadata after native setData assigns its root following import.
+      setData: Patcher.OverrideExisting(next => function (data: CanvasData): void {
+        const result = invoke(next, this, data)
+        that.plugin.app.workspace.trigger('advanced-canvas:canvas-changed', this)
         return result
-      }),*/
+      }),
       getData: Patcher.OverrideExisting(next => function (...args: Parameters<typeof next>): CanvasData {
         const result = invoke(next, this, ...args)
         that.plugin.app.workspace.trigger('advanced-canvas:data-requested', this, result)
@@ -292,20 +330,27 @@ export default class CanvasPatcher extends Patcher {
       }),
       importData: Patcher.OverrideExisting(next => function (data: CanvasData, clearCanvas?: boolean, silent?: boolean): void {
         const targetFilePath = this.view.file?.path
+        const ticket = canvasImports.begin(this, clearCanvas !== false || data.nodes.length > 0 || data.edges.length > 0)
+        // Metadata can also be changed by native writers outside element setters.
+        const metadataRevision = JSON.stringify(data.metadata ?? this.getData().metadata)
         const setData = (data: CanvasData) => {
           // Skip if the canvas got unloaded or the file changed
-          if (!this.view.file || this.view.file.path !== targetFilePath) return
+          if (!this.view.file || this.view.file.path !== targetFilePath) return false
+          if (!canvasImports.allows(this, ticket) || JSON.stringify(this.getData().metadata) !== metadataRevision) { new Notice('Deferred canvas refresh skipped after newer canvas activity. Reopen the canvas to refresh its portals.'); return false }
 
           this.importData(data, true, true)
+          return true
         }
 
-        if (!silent) that.plugin.app.workspace.trigger('advanced-canvas:data-loaded:before', this, data, setData)
+        if (!silent) that.plugin.app.workspace.trigger('advanced-canvas:data-loaded:before', this, data, setData, clearCanvas)
         const result = invoke(next, this, data, clearCanvas)
-        if (!silent) that.plugin.app.workspace.trigger('advanced-canvas:data-loaded:after', this, data, setData)
+        if (!silent) that.plugin.app.workspace.trigger('advanced-canvas:data-loaded:after', this, data, setData, clearCanvas)
+        canvasImports.finish(this, ticket)
 
         return result
       }),
       requestSave: Patcher.OverrideExisting(next => function (...args: Parameters<typeof next>): void {
+        if (isTransactionActive(this)) return
         that.plugin.app.workspace.trigger('advanced-canvas:canvas-saved:before', this)
         const result = invoke(next, this, ...args)
         that.plugin.app.workspace.trigger('advanced-canvas:canvas-saved:after', this)
@@ -343,6 +388,7 @@ export default class CanvasPatcher extends Patcher {
 
       const node = editor.node
       if (!node) return
+      canvasImports.changed(node.canvas)
 
       that.plugin.app.workspace.trigger('advanced-canvas:node-text-content-changed', node.canvas, node, update)
     })])
@@ -369,11 +415,14 @@ export default class CanvasPatcher extends Patcher {
         return result
       }),
       setData: Patcher.OverrideExisting(next => function (data: CanvasNodeData, addHistory?: boolean): void {
+        const previousProperties = this.getData().propertyGraph
         const unchanged = JSON.stringify(this.getData()) === JSON.stringify(data)
         const result = invoke(next, this, data)
 
         let savedData: CanvasData | null = null
         if (!unchanged) {
+          canvasImports.changed(this.canvas)
+          if (JSON.stringify(previousProperties) !== JSON.stringify(data.propertyGraph)) that.plugin.app.workspace.trigger('advanced-canvas:element-properties-changed', this.canvas, this)
           if (node.initialized && !node.isDirty) {
             node.isDirty = true
             that.plugin.app.workspace.trigger('advanced-canvas:node-changed', this.canvas, node)
@@ -381,14 +430,14 @@ export default class CanvasPatcher extends Patcher {
           }
 
           // Save the data to the file (only if the canvas is initialized)
-          if (this.initialized) {
-            savedData = this.canvas.getData()
+          if (this.initialized && !deferElementSave(this.canvas, addHistory)) {
+            if (addHistory) savedData = this.canvas.getData()
             this.canvas.view.requestSave()
           }
         }
 
         // Add to the undo stack
-        if (addHistory) this.canvas.pushHistory(savedData ?? this.canvas.getData())
+        if (addHistory && !isTransactionActive(this.canvas)) this.canvas.pushHistory(savedData ?? this.canvas.getData())
 
         return result
       }),
@@ -484,11 +533,15 @@ export default class CanvasPatcher extends Patcher {
     const uninstallers: Array<() => void> = []
     Patcher.patch<CanvasEdge>(this.plugin, edge, {
       setData: Patcher.OverrideExisting(next => function (data: CanvasEdgeData, addHistory?: boolean): void {
+        const previousProperties = this.getData().propertyGraph
         const unchanged = JSON.stringify(this.getData()) === JSON.stringify(data)
         const result = invoke(next, this, data)
 
         let savedData: CanvasData | null = null
         if (!unchanged) {
+          canvasImports.changed(this.canvas)
+          that.plugin.app.workspace.trigger('advanced-canvas:edge-data-changed', this.canvas, this)
+          if (JSON.stringify(previousProperties) !== JSON.stringify(data.propertyGraph)) that.plugin.app.workspace.trigger('advanced-canvas:element-properties-changed', this.canvas, this)
           if (this.initialized && !this.isDirty) {
             this.isDirty = true
             that.plugin.app.workspace.trigger('advanced-canvas:edge-changed', this.canvas, this)
@@ -496,14 +549,14 @@ export default class CanvasPatcher extends Patcher {
           }
 
           // Save the data to the file (only if the canvas is initialized)
-          if (this.initialized) {
-            savedData = this.canvas.getData()
+          if (this.initialized && !deferElementSave(this.canvas, addHistory)) {
+            if (addHistory) savedData = this.canvas.getData()
             this.canvas.view.requestSave()
           }
         }
 
         // Add to the undo stack
-        if (addHistory) this.canvas.pushHistory(savedData ?? this.canvas.getData())
+        if (addHistory && !isTransactionActive(this.canvas)) this.canvas.pushHistory(savedData ?? this.canvas.getData())
 
         return result
       }),
@@ -561,10 +614,8 @@ export default class CanvasPatcher extends Patcher {
       return
     }
 
-    const that = this // eslint-disable-line @typescript-eslint/no-this-alias -- For patcher
-
     // Patch CanvasElement object
-    const uninstall = around(canvasElement, {
+    const uninstall = Patcher.registerUninstaller(this.plugin, around(canvasElement, {
       initialize: (next: CanvasElement["initialize"]) => function (this: CanvasElement, ...args: Parameters<CanvasElement["initialize"]>): void {
         const result = invoke(next, this, ...args)
 
@@ -573,8 +624,6 @@ export default class CanvasPatcher extends Patcher {
 
         return result
       }
-    })
-
-    that.plugin.register(uninstall)
+    }))
   }
 }

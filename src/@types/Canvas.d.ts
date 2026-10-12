@@ -66,6 +66,8 @@ export interface CanvasEphemeralState {
   match?: {
     matches?: number[][]
     nodeId?: string
+    // Codex (LLM agent): stable edge navigation, independent of display order.
+    edgeId?: string
   }
 }
 

@@ -1,0 +1,230 @@
+{
+  "checks": [
+    {
+      "name": "property fields survive native import",
+      "passed": true,
+      "details": {
+        "id": "node1",
+        "type": "text",
+        "text": "Body one",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "status: accepted\n"
+        },
+        "x": 0,
+        "y": 0,
+        "width": 300,
+        "height": 200
+      }
+    },
+    {
+      "name": "node frontmatter appears during native edit",
+      "passed": true
+    },
+    {
+      "name": "node frontmatter is clickable above native body editor",
+      "passed": true,
+      "details": {
+        "rect": {
+          "x": 587.5,
+          "y": 340.4375,
+          "width": 288,
+          "height": 65,
+          "top": 340.4375,
+          "right": 875.5,
+          "bottom": 405.4375,
+          "left": 587.5
+        }
+      }
+    },
+    {
+      "name": "node YAML editor stays focused and connected",
+      "passed": true
+    },
+    {
+      "name": "node blur stores YAML exactly",
+      "passed": true,
+      "details": {
+        "id": "node1",
+        "type": "text",
+        "text": "Body one",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "# kept comment\nstatus: accepted\nflag: false\nzero: 0\n"
+        },
+        "x": 0,
+        "y": 0,
+        "width": 300,
+        "height": 200
+      }
+    },
+    {
+      "name": "node frontmatter hidden after native edit",
+      "passed": true
+    },
+    {
+      "name": "property commit has one history entry",
+      "passed": true,
+      "details": {
+        "beforeHistory": 1,
+        "after": 2
+      }
+    },
+    {
+      "name": "edge frontmatter appears during native edit",
+      "passed": true
+    },
+    {
+      "name": "edge YAML editor stays focused and connected",
+      "passed": true
+    },
+    {
+      "name": "edge property commit preserves label",
+      "passed": true,
+      "details": {
+        "id": "edge1",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "role: assumption\nweight: 0\n"
+        },
+        "fromNode": "node1",
+        "fromSide": "right",
+        "toNode": "node2",
+        "toSide": "left",
+        "label": "uses"
+      }
+    },
+    {
+      "name": "edge frontmatter hidden after edit",
+      "passed": true
+    },
+    {
+      "name": "node view shows only matches",
+      "passed": true
+    },
+    {
+      "name": "edge hidden when endpoint is hidden",
+      "passed": true
+    },
+    {
+      "name": "view switches do not write graph or history",
+      "passed": true
+    },
+    {
+      "name": "save includes hidden nodes and edges",
+      "passed": true,
+      "details": {
+        "nodes": 2,
+        "edges": 1
+      }
+    },
+    {
+      "name": "disk save contains edited node and edge YAML",
+      "passed": true
+    },
+    {
+      "name": "undo removes created saved-view definition",
+      "passed": true,
+      "details": {
+        "version": "1.0-1.0",
+        "frontmatter": {},
+        "propertyGraph": {
+          "version": 1,
+          "views": []
+        }
+      }
+    },
+    {
+      "name": "undo updates active view selector",
+      "passed": true
+    },
+    {
+      "name": "redo restores saved-view definition",
+      "passed": true
+    },
+    {
+      "name": "edge mode includes both endpoints",
+      "passed": true
+    }
+  ],
+  "passed": 20,
+  "version": "7.1.0-mkls.1",
+  "graph": {
+    "metadata": {
+      "version": "1.0-1.0",
+      "frontmatter": {},
+      "propertyGraph": {
+        "version": 1,
+        "views": [
+          {
+            "id": "qa-accepted",
+            "name": "Accepted",
+            "mode": "nodes",
+            "nodes": {
+              "kind": "condition",
+              "scope": "properties",
+              "path": [
+                "status"
+              ],
+              "operator": "equals",
+              "value": "accepted"
+            }
+          },
+          {
+            "id": "qa-edges",
+            "name": "Assumptions",
+            "mode": "edges",
+            "edges": {
+              "kind": "condition",
+              "scope": "properties",
+              "path": [
+                "role"
+              ],
+              "operator": "equals",
+              "value": "assumption"
+            }
+          }
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "id": "node1",
+        "type": "text",
+        "text": "Body one",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "# kept comment\nstatus: accepted\nflag: false\nzero: 0\n"
+        },
+        "x": 0,
+        "y": 0,
+        "width": 300,
+        "height": 200
+      },
+      {
+        "id": "node2",
+        "type": "text",
+        "text": "Body two",
+        "x": 400,
+        "y": 0,
+        "width": 300,
+        "height": 200
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge1",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "role: assumption\nweight: 0\n"
+        },
+        "fromNode": "node1",
+        "fromSide": "right",
+        "toNode": "node2",
+        "toSide": "left",
+        "label": "uses"
+      }
+    ]
+  },
+  "propertyParses": 3
+}

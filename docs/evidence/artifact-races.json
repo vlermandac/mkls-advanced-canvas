@@ -1,0 +1,89 @@
+{
+  "checks": [
+    {
+      "name": "stale refresh rejected after element write",
+      "passed": true
+    },
+    {
+      "name": "empty additive import keeps pending callback valid",
+      "passed": true
+    },
+    {
+      "name": "stale refresh rejected after metadata write",
+      "passed": true,
+      "details": {
+        "metadataResult": false,
+        "metadata": {
+          "version": "1.0-1.0",
+          "frontmatter": {},
+          "propertyGraph": {
+            "version": 1,
+            "views": [
+              {
+                "id": "new",
+                "name": "New configuration",
+                "mode": "nodes"
+              }
+            ]
+          }
+        },
+        "serialized": {
+          "version": "1.0-1.0",
+          "frontmatter": {},
+          "propertyGraph": {
+            "version": 1,
+            "views": [
+              {
+                "id": "new",
+                "name": "New configuration",
+                "mode": "nodes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "older import cannot replace a newer import",
+      "passed": true
+    },
+    {
+      "name": "native setData writer rebinds metadata and view controls",
+      "passed": true
+    },
+    {
+      "name": "native label predicate excludes old label",
+      "passed": true
+    },
+    {
+      "name": "native edge label edit updates retained index",
+      "passed": true,
+      "details": {
+        "id": "edge",
+        "fromNode": "a",
+        "fromSide": "right",
+        "toNode": "b",
+        "toSide": "left",
+        "label": "After"
+      }
+    },
+    {
+      "name": "empty-label frontmatter stays focused and connected",
+      "passed": true
+    },
+    {
+      "name": "empty-label render keeps active frontmatter editor",
+      "passed": true
+    },
+    {
+      "name": "YAML click does not refocus native edge body",
+      "passed": true
+    },
+    {
+      "name": "unlabeled edge preserves properties and releases label hooks",
+      "passed": true
+    }
+  ],
+  "passed": 11,
+  "fixture": "Races-1791848916642.canvas"
+}

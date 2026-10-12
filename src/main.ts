@@ -1,5 +1,10 @@
-import { Plugin, requireApiVersion, TextFileView } from 'obsidian'
+// MKLS fork integration authored by Codex (LLM agent).
+import { Plugin, Notice, requireApiVersion, TextFileView } from 'obsidian'
+import PropertyGraphCanvasExtension from './canvas-extensions/property-graph-canvas-extension'
 import { Canvas, CanvasView } from './@types/Canvas'
+import type { CanvasData } from './@types/AdvancedJsonCanvas'
+import { canonicalHistory } from './utils/canonical-history'
+import { CanvasGroupNodeData, CanvasFileNodeData } from './@types/AdvancedJsonCanvas'
 
 // Utils
 import IconsHelper from './utils/icons-helper'
@@ -114,6 +119,7 @@ const CANVAS_EXTENSIONS: CanvasExtensionConstructor[] = [
   CommandsCanvasExtension,
   BetterReadonlyCanvasExtension,
   ReadingModeFixCanvasExtension,
+  PropertyGraphCanvasExtension,
   GroupCanvasExtension,
   NodeTemplatesCanvasExtension,
   VariableBreakpointCanvasExtension,
@@ -138,6 +144,10 @@ export default class AdvancedCanvasPlugin extends Plugin {
   canvasExtensions: CanvasExtension[]
 
   async onload() {
+    if (this.app.plugins.getPlugin('advanced-canvas')) {
+      new Notice('Disable the upstream plugin before enabling this fork; both plugins patch the same native classes.')
+      throw Error('Conflicting Advanced Canvas plugin is enabled')
+    }
     IconsHelper.addIcons()
 
     this.settings = new SettingsManager(this)
@@ -165,6 +175,30 @@ export default class AdvancedCanvasPlugin extends Plugin {
     }).filter((e): e is CanvasExtension => e !== undefined)
   }
 
+  override unload() {
+    // Codex (LLM agent): flush editors while adapters are installed, then restore
+    // canonical records so native saves after disable cannot persist projections.
+    // Component.unload removes registered hooks BEFORE onunload. Run this
+    // normalization first, while upstream's serialization adapters are active.
+    if (this.canvasExtensions) {
+      this.canvasExtensions.find((extension): extension is PropertyGraphCanvasExtension => extension instanceof PropertyGraphCanvasExtension)?.prepareUnload()
+      for (const canvas of this.getCanvases()) {
+        try {
+          const transform = (data: CanvasData) => this.app.workspace.trigger('advanced-canvas:data-requested', canvas, data)
+          canvas.history.data = (canvas.history.data as CanvasData[]).map(data => canonicalHistory(data, transform))
+          const transient = [...canvas.nodes.values()].some(node => {
+            const data = node.getData()
+            return PortalsCanvasExtension.isPortalElement(node.id) || (data as CanvasGroupNodeData).collapsedData !== undefined || (data as CanvasFileNodeData).isPortalLoaded !== undefined
+          })
+          const data = canonicalHistory(canvas.getData(), transform)
+          if (transient) canvas.importData(data, true, true)
+          Reflect.set(canvas, 'data', data) // Native 1.14.4 serializer cache, refreshed without reading it.
+          for (const node of canvas.nodes.values()) node.collapseEl?.remove()
+        } catch (error) { console.error('Unable to restore canonical canvas on unload', error) }
+      }
+    }
+    super.unload()
+  }
   onunload() {}
 
   getCanvases(): Canvas[] {

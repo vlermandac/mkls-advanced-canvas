@@ -6,6 +6,7 @@ import { NodeTemplate } from "./canvas-extensions/node-templates-canvas-extensio
 import { VARIABLE_BREAKPOINT_CSS_VAR } from "./canvas-extensions/variable-breakpoint-canvas-extension"
 import AdvancedCanvasPlugin from "./main"
 import CssStylesConfigManager from "./managers/css-styles-config-manager"
+// Codex (LLM agent): opt-in overview simplification measured by overview-probe.mjs.
 
 const README_URL = 'https://github.com/Developer-Mike/obsidian-advanced-canvas?tab=readme-ov-file'
 const KOFI_PAGE_URL = 'https://ko-fi.com/X8X27IA08'
@@ -46,6 +47,7 @@ export interface AdvancedCanvasPluginSettingsValues {
   edgeStylePathfinderPathRounded: boolean
 
   variableBreakpointFeatureEnabled: boolean
+  lightweightOverviewEnabled: boolean
 
   zOrderingControlFeatureEnabled: boolean
   zOrderingControlShowOneLayerShiftOptions: boolean
@@ -151,6 +153,7 @@ export const DEFAULT_SETTINGS_VALUES: AdvancedCanvasPluginSettingsValues = {
   edgeStylePathfinderPathRounded: true,
 
   variableBreakpointFeatureEnabled: false,
+  lightweightOverviewEnabled: false,
 
   zOrderingControlFeatureEnabled: false,
   zOrderingControlShowOneLayerShiftOptions: false,
@@ -336,6 +339,11 @@ export class AdvancedCanvasPluginSettingTab extends PluginSettingTab {
       },
 
       // General settings
+      {
+        name: 'Simplify edges when zoomed out',
+        desc: 'Hide arrowheads at overview zoom. Zoom in to select or reconnect edges. Lines stay visible.',
+        control: { type: 'toggle', key: 'lightweightOverviewEnabled' }
+      },
       {
         name: 'Node type on double click',
         desc: 'The type of node that will be created when double clicking on the canvas.',

@@ -2,6 +2,7 @@ import { Canvas } from "src/@types/Canvas"
 import AdvancedCanvasPlugin from "src/main"
 import { AdvancedCanvasPluginSettingsValues } from "src/settings"
 import CanvasExtension from "../canvas-extension"
+// Codex (LLM agent): expose the measured overview option in every canvas window.
 
 const EXPOSED_SETTINGS: (keyof AdvancedCanvasPluginSettingsValues)[] = [
   'disableFontSizeRelativeToZoom',
@@ -10,6 +11,7 @@ const EXPOSED_SETTINGS: (keyof AdvancedCanvasPluginSettingsValues)[] = [
   'collapsibleGroupsFeatureEnabled',
   'collapsedGroupPreviewOnDrag',
   'allowFloatingEdgeCreation',
+  'lightweightOverviewEnabled',
 ]
 
 export default class CanvasWrapperExposerExtension extends CanvasExtension {
@@ -18,10 +20,7 @@ export default class CanvasWrapperExposerExtension extends CanvasExtension {
   init() {
     this.plugin.registerEvent(this.plugin.app.workspace.on(
       'advanced-canvas:settings-changed',
-      () => CanvasWrapperExposerExtension.updateCanvasExposedSettings(
-        this.plugin,
-        this.plugin.getCurrentCanvas()?.wrapperEl
-      )
+      () => { for (const canvas of this.plugin.getCanvases()) CanvasWrapperExposerExtension.updateCanvasExposedSettings(this.plugin, canvas.wrapperEl) }
     ))
 
     this.plugin.registerEvent(this.plugin.app.workspace.on(

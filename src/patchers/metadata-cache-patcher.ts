@@ -1,9 +1,8 @@
-import { CanvasData, CanvasTextNodeData } from "assets/formats/advanced-json-canvas/spec/1.0-1.0"
-import { CachedMetadata, FrontmatterLinkCache, MetadataCache, Notice, TFile } from "obsidian"
-import { CanvasFileNodeData } from "src/@types/AdvancedJsonCanvas"
-import { ExtendedCachedMetadata, ExtendedEmbedCache, ExtendedLinkCache } from "src/@types/Obsidian"
+import { CachedMetadata, MetadataCache, Notice, TFile } from "obsidian"
+import { ExtendedCachedMetadata } from "src/@types/Obsidian"
 import FilepathHelper from "src/utils/filepath-helper"
 import HashHelper from "src/utils/hash-helper"
+import { computeCanvasMetadata, TextMetadataCache } from "src/utils/metadata-index-cache"
 import TaskQueue from "src/utils/task-queue"
 import Patcher, { invoke } from "./patcher"
 
@@ -54,7 +53,8 @@ async function computeCanvasFileMetadataAsync(this: MetadataCache, file: TFile) 
   if (!cache) this.saveFileCache(file.path, { mtime: 0, size: 0, hash: "" })
   else {
     const unchanged = cache.mtime === file.stat.mtime && cache.size === file.stat.size
-    const hasMetadataCache = !!(cache.hash && Object.prototype.hasOwnProperty.call(this.metadataCache, cache.hash))
+    // Codex (LLM agent): old native/upstream hashes can lack stable element IDs.
+    const hasMetadataCache = !!(cache.hash && (this.metadataCache[cache.hash] as ExtendedCachedMetadata | undefined)?.mklsMetadataVersion === 1)
 
     if (unchanged && hasMetadataCache)
       isStale = false
@@ -86,7 +86,7 @@ async function updateMetadataCache(this: MetadataCache, file: TFile) {
   this.saveFileCache(file.path, cache)
 
   let metadata = this.metadataCache[cache.hash] as ExtendedCachedMetadata | undefined
-  if (metadata) return this.trigger(
+  if (metadata?.mklsMetadataVersion === 1) return this.trigger(
     "changed", file, data, metadata
   )
 
@@ -108,85 +108,18 @@ async function updateMetadataCache(this: MetadataCache, file: TFile) {
   }
 }
 
+// Claude (LLM agent): per-node parsing goes through a bounded exact-text cache with bounded
+// concurrency instead of re-parsing every text node of the file with an unbounded Promise.all.
+// Output (nodes, links, embeds and their positions) is built by computeCanvasMetadata.
+const NODE_METADATA_CONCURRENCY = 8
+const nodeMetadataCache = new TextMetadataCache<CachedMetadata>({ maxEntries: 20_000, maxTextLength: 32 * 1024 * 1024 })
+
 async function computeCanvasMetadataAsync(this: MetadataCache, data: string): Promise<ExtendedCachedMetadata> {
-  const content = JSON.parse(data || '{}') as Partial<CanvasData>
-  const metadata = {
-    v: 1
-  } as Partial<ExtendedCachedMetadata>
-
-  const frontmatter = content.metadata?.frontmatter
-  metadata.frontmatterPosition = {
-    start: { line: 0, col: 0, offset: 0 },
-    end: { line: 0, col: 0, offset: 0 }
-  }
-  metadata.frontmatter = frontmatter
-
-  metadata.frontmatterLinks = []
-  for (const [key, value] of Object.entries(frontmatter ?? {})) {
-    const getLinks = (value: string[]) => value.map((v) => {
-      if (!v.startsWith('[[') || !v.endsWith(']]')) return null
-      const [link, ...aliases] = v.slice(2, -2).split('|')
-
-      return {
-        key: key,
-        displayText: aliases.length > 0 ? aliases.join('|') : link,
-        link: link ?? v,
-        original: v
-      } satisfies FrontmatterLinkCache
-    }).filter((v) => v !== null) as FrontmatterLinkCache[]
-
-    if (typeof value === 'string') metadata.frontmatterLinks?.push(...getLinks([value]))
-    else if (Array.isArray(value)) metadata.frontmatterLinks?.push(...getLinks(value as string[]))
-  }
-
-  metadata.nodes = {}
-  metadata.links = []
-  metadata.embeds = []
-  await Promise.all((content.nodes ?? []).map(async (node, index) => {
-    if (node.type !== 'text') return
-
-    const text = (node as CanvasTextNodeData).text
-    const buffer = new TextEncoder().encode(text).buffer
-    const nodeMetadata = await this.computeMetadataAsync(buffer)
-    if (!nodeMetadata) return
-
-    metadata.nodes![node.id] = nodeMetadata
-    metadata.links!.push(...(nodeMetadata.links ?? []).map(link => ({
-      ...link,
-      position: {
-        nodeId: node.id,
-        start: { line: 0, col: 1, offset: 0 },
-        end: { line: 0, col: 1, offset: index }
-      }
-    } satisfies ExtendedLinkCache)))
-    metadata.embeds!.push(...(nodeMetadata.embeds ?? []).map(embed => ({
-      ...embed,
-      position: {
-        nodeId: node.id,
-        start: { line: 0, col: 1, offset: 0 },
-        end: { line: 0, col: 1, offset: index }
-      }
-    }) satisfies ExtendedEmbedCache))
-  }))
-
-  for (const [index, node] of (content.nodes ?? []).entries()) {
-    if (node.type !== 'file') continue
-
-    const file = (node as CanvasFileNodeData).file
-    if (!file) continue
-
-    metadata.embeds.push({
-      link: file,
-      original: file,
-      displayText: file,
-      position: {
-        start: { line: 0, col: 1, offset: 0 },
-        end: { line: 0, col: 1, offset: index }
-      }
-    })
-  }
-
-  return metadata as ExtendedCachedMetadata
+  return computeCanvasMetadata(data, {
+    computeText: async text => await this.computeMetadataAsync(new TextEncoder().encode(text).buffer) ?? null,
+    cache: nodeMetadataCache,
+    concurrency: NODE_METADATA_CONCURRENCY
+  })
 }
 
 async function resolveCanvasLinks(this: MetadataCache, filepath: string) {

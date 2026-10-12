@@ -1,0 +1,33 @@
+npm notice run mkls-advanced-canvas@7.1.0-mkls.1 bench:filter
+npm notice run node tools/filter-benchmark.mjs
+# Filter benchmark — node v24.21.0, linux/x64
+
+## 1,000 nodes / 3,000 edges (15 timed runs, median / max ms)
+| view | evaluateView | visible nodes | visible edges | lookups/eval | index load | 1k node upserts | 1k edge upserts | setView |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| all | 0.56 / 1.42 | 1000 | 3000 | 0 | 1.71 / 2.97 | 1.57 / 2.31 | 0.83 / 1.15 | 2.00 / 2.02 (two switches) |
+| node-equals | 0.80 / 1.02 | 46 | 10 | 1000 | 1.53 / 1.94 | 1.89 / 2.66 | 1.05 / 1.93 | 1.30 / 1.79 (two switches) |
+| node-nested | 1.32 / 2.94 | 138 | 38 | 1057 | 3.20 / 5.03 | 2.60 / 3.62 | 1.07 / 1.93 | 1.91 / 2.13 (two switches) |
+| edge-constrained | 0.99 / 1.47 | 380 | 281 | 2427 | 2.06 / 3.14 | 1.56 / 2.16 | 0.92 / 1.17 | 1.86 / 2.11 (two switches) |
+
+Model preservation: sha256(JSON) 19f2eb3081de37f3 before and after all runs (unchanged). Heap used 26 MiB.
+
+## 10,000 nodes / 30,000 edges (15 timed runs, median / max ms)
+| view | evaluateView | visible nodes | visible edges | lookups/eval | index load | 1k node upserts | 1k edge upserts | setView |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| all | 8.20 / 21.90 | 10000 | 30000 | 0 | 36.89 / 66.29 | 4.22 / 12.97 | 1.12 / 2.30 | 24.62 / 31.75 (two switches) |
+| node-equals | 7.76 / 9.11 | 485 | 73 | 10000 | 37.08 / 49.44 | 4.14 / 13.72 | 0.95 / 1.12 | 19.20 / 52.09 (two switches) |
+| node-nested | 14.47 / 18.87 | 1311 | 375 | 10507 | 53.78 / 68.57 | 5.00 / 5.83 | 1.39 / 5.69 | 30.37 / 33.29 (two switches) |
+| edge-constrained | 14.51 / 18.02 | 3848 | 2828 | 24342 | 48.96 / 80.71 | 3.58 / 13.63 | 1.27 / 2.05 | 24.31 / 26.32 (two switches) |
+
+Model preservation: sha256(JSON) 283a9ef7945ae4b1 before and after all runs (unchanged). Heap used 123 MiB.
+
+## 50,000 nodes / 150,000 edges (7 timed runs, median / max ms)
+| view | evaluateView | visible nodes | visible edges | lookups/eval | index load | 1k node upserts | 1k edge upserts | setView |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| all | 71.68 / 78.30 | 50000 | 150000 | 0 | 361.59 / 405.74 | 8.38 / 11.82 | 3.08 / 3.18 | 276.27 / 288.32 (two switches) |
+| node-equals | 45.46 / 52.20 | 2425 | 354 | 50000 | 331.21 / 451.10 | 5.41 / 6.32 | 2.63 / 16.76 | 162.02 / 173.35 (two switches) |
+| node-nested | 80.61 / 84.63 | 6541 | 1926 | 52575 | 411.32 / 599.47 | 7.72 / 21.61 | 3.24 / 4.11 | 239.38 / 252.47 (two switches) |
+| edge-constrained | 116.84 / 145.45 | 19291 | 14113 | 121474 | 414.91 / 543.31 | 6.69 / 21.42 | 3.29 / 3.82 | 248.78 / 282.16 (two switches) |
+
+Model preservation: sha256(JSON) 928bc2b4922c8abd before and after all runs (unchanged). Heap used 568 MiB.

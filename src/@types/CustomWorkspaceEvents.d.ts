@@ -47,6 +47,9 @@ export interface CustomWorkspaceEvents {
   'advanced-canvas:node-changed': (canvas: Canvas, node: CanvasNode) => void
   /** Fired when any edge gets changed */
   'advanced-canvas:edge-changed': (canvas: Canvas, edge: CanvasEdge) => void
+  // Codex (LLM agent): distinguish model mutations from rendering.
+  'advanced-canvas:edge-data-changed': (canvas: Canvas, edge: CanvasEdge) => void
+  'advanced-canvas:element-properties-changed': (canvas: Canvas, element: CanvasNode | CanvasEdge) => void
   /** Fired when any node gets rendered */
   'advanced-canvas:node-rendered': (canvas: Canvas, node: CanvasNode) => void
   /** Fired when the text content of a node gets changed (While typing) */
@@ -92,9 +95,9 @@ export interface CustomWorkspaceEvents {
   /** Fired when the canvas data gets requested */
   'advanced-canvas:data-requested': (canvas: Canvas, data: CanvasData) => void
   /** Fired before the canvas data gets set */
-  'advanced-canvas:data-loaded:before': (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => void) => void
+  'advanced-canvas:data-loaded:before': (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => boolean | void, clearCanvas?: boolean) => void
   /** Fired after the canvas data gets set */
-  'advanced-canvas:data-loaded:after': (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => void) => void
+  'advanced-canvas:data-loaded:after': (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => boolean | void, clearCanvas?: boolean) => void
   /** Fired before the canvas gets saved */
   'advanced-canvas:canvas-saved:before': (canvas: Canvas) => void
   /** Fired after the canvas gets saved */

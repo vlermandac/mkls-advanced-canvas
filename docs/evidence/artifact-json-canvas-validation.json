@@ -1,0 +1,442 @@
+{
+  "standard": "https://jsoncanvas.org/spec/1.0/",
+  "checked": 87,
+  "failed": 0,
+  "checks": [
+    {
+      "file": "Bench/Bench-dense-1000-2026-10-12T22-24-16-658Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-grouped-1000-2026-10-12T22-24-16-658Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-media-100-2026-10-12T22-25-41-808Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T21-40-18-497Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T21-45-31-448Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T21-51-25-572Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T21-55-35-830Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T23-00-01-300Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T23-00-56-973Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T23-01-07-954Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T23-01-19-816Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T23-01-31-672Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T23-01-44-033Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-100-2026-10-12T23-28-45-505Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-1000-2026-10-12T21-45-31-448Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-1000-2026-10-12T21-51-25-572Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-1000-2026-10-12T21-55-35-830Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-1000-2026-10-12T22-03-06-813Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-1000-2026-10-12T23-02-17-088Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-1000-2026-10-12T23-12-17-823Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-1000-2026-10-12T23-16-31-282Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-1000-2026-10-12T23-25-18-913Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-1000-2026-10-12T23-28-58-357Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-10000-2026-10-12T21-45-31-448Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-10000-2026-10-12T21-51-25-572Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-10000-2026-10-12T21-55-35-830Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-10000-2026-10-12T22-03-06-813Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-10000-2026-10-12T22-05-50-809Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-10000-2026-10-12T22-07-38-509Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-5000-2026-10-12T21-45-31-448Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-5000-2026-10-12T21-51-25-572Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Bench/Bench-sparse-5000-2026-10-12T21-55-35-830Z.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Compatibility-1791841489249.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791840896132.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791841003479.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791841188668-view-1791841192625.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791841188668.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791841391189-view-1791841395101.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791841391189.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791842493141-view-1791842497784.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791842493141-view-1791842498696.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791842493141.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843147322-view-1791843152363.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843147322.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843273456-view-1791843278491.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843273456.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843500720-view-1791843505792.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843500720-view-1791843506700.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843500720.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843608467-view-1791843613577.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843608467-view-1791843614486.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791843608467.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791844423220-view-1791844428239.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791844423220-view-1791844429147.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791844423220.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791847806688-view-1791847811747.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791847806688-view-1791847812658.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791847806688.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791848906626-view-1791848911669.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791848906626-view-1791848912580.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Extended-1791848906626.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Lifecycle-1791844932805.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Lifecycle-1791845472260.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Lifecycle-1791845652738.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Lifecycle-1791848241420.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Lifecycle-1791848917861.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Portal Source.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Races-1791843735313.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Races-1791843797687.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Races-1791844242167.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Races-1791844433280.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Races-1791847816719.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Races-1791847977466.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Races-1791848240188.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Races-1791848916642.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791839424747.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791839552343.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791839982272.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791841360661.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791842490998.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791844421117.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791845839509.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791845920969.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791847804372.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791848615323.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip-1791848904720.canvas",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "file": "Roundtrip.canvas",
+      "passed": true,
+      "errors": []
+    }
+  ]
+}

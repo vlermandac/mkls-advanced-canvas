@@ -1,0 +1,203 @@
+● I've finished the read-only review of the Advanced_Canvas baseline at 4b8630c. I made no file edits, installs, benchmark runs, vault or
+  Obsidian changes, pushes or upstream contact. I followed local-machine-context; the relevant facts are CachyOS, Hyprland on Wayland, a Ryzen
+  5 3600X with 31 GiB RAM and a GTX 1660S. AGENTS.md only requires that every LLM change be clearly marked, and CONTRIBUTING.md targets the
+  beta branch and rejects LLM PRs, so nothing goes upstream. There is no project-root AGENTS.md or CLAUDE.md, and planning/ doesn't exist yet.
+  The plugin is about 11k lines of TypeScript and works by patching Obsidian's internal Canvas classes and broadcasting advanced-canvas:*
+  workspace events.
+
+  Legend: [Obs] means the cost is visible in the code; [Hyp] means it's unmeasured or depends on Obsidian internals I can't see.
+
+  1. Edits, undo and the hooks that run on every load or save
+
+  These come first because bulk updates and filtered views both go through them.
+
+  #: A
+  Evidence: patchers/canvas-patcher.ts:371-394 (nodes), :486-509 (edges): each setData stringifies the element twice, then calls
+  canvas.getData() and requestSave(); pushHistory(getData()) follows when history is requested
+  Cost: [Obs] O(N+E) per element change, so a bulk update of k elements costs O(k·(N+E)). savedData = getData() is computed even when
+  addHistory is false and the result is never used.
+  Proposed fix: Quick win: compute it only when addHistory. Larger: a transaction API that suppresses per-element getData, history and save,
+  then does one pushHistory and one requestSave at commit.
+  ────────────────────────────────────────
+  #: B
+  Evidence: canvas-patcher.ts:264-275: undo/redo call importData(getData(), true) after the native undo
+  Cost: [Obs] Every undo/redo clears the canvas and rebuilds all DOM, re-patches every element and reruns the load hooks (portal deep copy,
+  group collapse).
+  Proposed fix: Diff-apply the history snapshot, or apply it only to changed IDs. Measure first.
+  ────────────────────────────────────────
+  #: C
+  Evidence: patchers/patcher.ts:116 registers per-element uninstallers with the plugin; canvas-patcher.ts:578 does the same
+  Cost: [Obs] The plugin's unload list grows by one or two entries per node or edge added, including every rebuild in row B. The closures keep
+
+  removed nodes reachable until plugin unload. [Hyp] The leak's size is unmeasured.
+  Proposed fix: Keep per-element uninstallers only in elementUninstallers, or patch prototypes once instead of instances.
+  ────────────────────────────────────────
+  #: D
+  Evidence: canvas-patcher.ts:290: every getData fires data-requested; portals:262-291 filters nodes and edges; collapsible-groups:115-134
+  flattens collapsed groups
+  Cost: [Obs] O(N+E) extra work on every getData, and row A multiplies it.
+  Proposed fix: Skip early when the canvas has no portals or collapsed groups.
+  ────────────────────────────────────────
+  #: E
+  Evidence: collapsible-groups-canvas-extension.ts:136-175: collapseNodes uses .filter, .includes and .some over arrays
+  Cost: [Obs] O(G·(N + E·C + N·C)), roughly quadratic; it runs on every load, which includes every undo.
+  Proposed fix: Use ID Sets and one spatial pass.
+  ────────────────────────────────────────
+  #: F
+  Evidence: portals-canvas-extension.ts:295-322: each load deep-copies all data with JSON.parse(JSON.stringify(...)) and opens portals
+  asynchronously, then imports a second time if counts differ
+  Cost: [Obs] O(size) per load, plus a possible second full import.
+  Proposed fix: Skip early when no portals are open.
+  ────────────────────────────────────────
+  #: G
+  Evidence: portals-canvas-extension.ts:87: Object.values(canvas.nodes)
+  Cost: [Obs] Bug: nodes is a Map (@types/Canvas.d.ts:258), so this is always [] and portals never refresh when their target file is modified.
+
+  The listener also runs for every vault modify and every open canvas.
+  Proposed fix: Use canvas.nodes.values() and filter by portal file path first.
+
+  2. Edge routing
+
+  ┌─────┬────────────────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────┐
+  │  #  │                        Evidence                        │                                  Cost                                  │
+  ├─────┼────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ H   │ pathfinding-a-star.ts:102-114                          │ [Obs] Each routed edge scans all N nodes and builds the obstacle list  │
+  │     │                                                        │ by calling getData() and getBBox() on each one.                        │
+  ├─────┼────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │     │                                                        │ [Obs] Each expanded grid cell runs isTouchingObstacle (O(N)) plus 4–8  │
+  │ I   │ pathfinding-a-star.ts:189-190, 243-259                 │ isInsideObstacle checks (O(N) each), so routing costs O(cells·8N). The │
+  │     │                                                        │  search area is unbounded, the grid is half the canvas grid size, and  │
+  │     │                                                        │ the visited sets use string keys.                                      │
+  ├─────┼────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │     │                                                        │ [Obs] There is a 100 ms timeout per edge, after which the edge         │
+  │ J   │ pathfinding-a-star.ts:8, 172-174                       │ silently falls back to the default path. Ending a drag that touches m  │
+  │     │                                                        │ A* edges can block the main thread for up to m×100 ms, and the visible │
+  │     │                                                        │  result depends on timing.                                             │
+  ├─────┼────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │     │ edge-styles.ts:118-126: updateAllEdgesInArea, called   │ [Obs] O(E) bounding-box scan that marks colliding edges dirty,         │
+  │ K   │ on node added, removed, drag end and keyboard move     │ whatever their routing method. Only A* edges depend on obstacles;      │
+  │     │ (:48-80)                                               │ direct and square edges depend only on their endpoints.                │
+  ├─────┼────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │     │ canvas-patcher.ts:510-516: every native edge render    │ [Obs] Per-render overhead for every edge. [Hyp] How often native code  │
+  │ L   │ fires edge-changed; edge-exposer.ts:100-126 responds   │ re-renders edges during drag or zoom is unmeasured.                    │
+  │     │ with getData and dataset writes                        │                                                                        │
+  └─────┴────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────┘
+
+  Fixes, in order:
+  1. Narrow updateAllEdgesInArea to A* edges plus the moved node's own edges, using the native edgeFrom/edgeTo adjacency maps.
+  2. Build one spatial index (uniform grid or R-tree) per batch of dirty edges, and filter obstacles once without calling getData.
+  3. Limit the search to the endpoints' bounding box plus a margin, and use integer cell keys.
+  4. Cache paths keyed by endpoints plus an obstacle-version counter.
+  5. Spread routing across frames under a frame budget; show the default path immediately and then upgrade it.
+
+  3. Selection, frame and zoom events, and DOM work
+
+  - M [Obs] edge-highlight-canvas-extension.ts:24-31: each selection change does O(E) DOM work, three classList.toggle calls per edge. It's
+    off by default. Fix: toggle only the difference between the old and new highlighted sets.
+  - N [Obs] canvas-metadata-exposer.ts:199-205: every canvas-metadata change does O(N) dataset writes. metadata-canvas-extension.ts:241-252
+    fires that change, plus requestSave, on every nested property set, and also creates a new Proxy on every nested read. This matters if
+    named views are stored in metadata: each view edit would cost O(N) DOM work plus a save. Fix: track only the previous start node, and
+    batch view edits into one write.
+  - O [Obs] collapsible-groups:96-113: getBBox on a collapsed group calls getBoundingClientRect twice, forcing a synchronous layout. That
+    getBBox is called inside the O(N) A* scan (H). Edge scans (K) use edge.getBBox; [Hyp] whether that reaches node getBBox is native and
+    unverified.
+  - P [Obs] canvas-patcher.ts:318-322: the popup menu renders twice per render, and about 10 listeners rebuild its DOM each time. Minor.
+  - Q [Obs] auto-file-node-edges:14-46, 81-82: any file-node change rescans all file nodes, with an O(N·L) .includes. That's O(F·(N·L+E)) per
+    change and up to O(F²·…) on load, because node-added fires once per node. It's off by default; keep it off in benchmarks unless testing
+    it.
+  - Frame and zoom path [Obs]: it's currently light. markViewportChanged (canvas-patcher.ts:113-118) fires two events, and only the
+    inexpensive better-readonly extension listens. The breakpoint lookup's getComputedStyle result is cached per node
+    (variable-breakpoint:354-362). The rule for new features: nothing O(N) runs on viewport events; coalesce work to one per animation frame.
+  - Culling [Obs/Hyp]: the plugin does no culling of its own. The only viewport-scoped call is getViewportNodes() while dragging a floating
+    edge. Whether native Canvas unloads off-screen node content, and at what cost, is [Hyp] and should be measured in benchmark stage 2 before
+    any culling work. Hiding with CSS display:none is serialization-safe but saves no model or event work: hidden nodes still count for
+    select-all, getContainingNodes, snapping, A* obstacles, export and search.
+
+  4. Metadata and YAML parse caching
+
+  - [Obs] metadata-cache-patcher.ts:145-170: Obsidian's metadata cache already parses every text node, including its frontmatter, into
+    metadata.nodes[nodeId]. But it's whole-file: any save re-parses all text nodes (Promise.all over N worker calls), and the cache is keyed
+    only by the hash of the whole file (:79-104).
+  - [Obs] Link positions use the node's array index as their offset (:157-159, 183-184), and canvas-patcher.ts:53-61 maps that index back into
+    the live canvas.nodes order. This breaks under filtered views or reordering: a backlink would select the wrong node. Store the node ID
+    instead.
+  - Recommendations:
+    - Keep a parse cache inside the plugin keyed by (element ID, hash of the frontmatter text). Parse only the frontmatter slice, with
+      Obsidian's parseYaml. Invalidate on node-text-content-changed (canvas-patcher.ts:336-348) but debounce the re-parse while the user
+      types.
+    - Reuse cached entries across saves for nodes whose text didn't change.
+    - Edges have no text body, so a structured JSON property object on the edge (exposed as a YAML editor) avoids parsing on the hot path
+      entirely.
+    - File nodes should use metadataCache.getFileCache(file).frontmatter, which is already cached.
+    - [Hyp] Native Canvas may not round-trip unknown node or edge keys; verify with a byte-level round-trip before choosing where properties
+      are stored.
+
+  5. Serialization and undo risks for filtering
+
+  The current code has two precedents for hiding elements: collapsible groups, which strip elements from data on load and re-inject them on
+  save, and portals, which add virtual elements on load and strip them on save. Both keep the file non-destructive, but both bypass history by
+  hand (collapsible:90, portals:97-98 adjust history.current and history.data directly). That's fragile.
+
+  Risks a "remove from the live model" view must handle:
+  1. Hidden elements must be re-injected in data-requested, or saving deletes them. Every native path that reads canvas.nodes directly instead
+     of getData() will miss hidden elements; the selection, containing-nodes, copy, export and presentation paths would all need auditing.
+  2. Edges whose endpoint is hidden must be stashed too. A visible endpoint deleted while its edge is hidden leaves a dangling edge, so we
+     need a defined policy.
+  3. Moving a visible group won't move hidden members. Store their positions relative to the group (as collapsible groups do) or block moving
+     groups while a filter is active.
+  4. Any reload from file (setViewData, sync, external writers such as MKLS tools) or undo reload must re-apply the filter idempotently.
+     Applying a view must push no history entries; use the silent importData path (canvas-patcher.ts:293-305) rather than history hacks.
+  5. History snapshots hold the full graph (@types/Canvas.d.ts:31-41), so memory is O(max history·(N+E)). Bulk updates must commit exactly one
+     entry (see row A).
+  6. The "unchanged" check compares JSON.stringify output (canvas-patcher.ts:372, 487), which depends on key order. Property maps with
+     reordered keys look changed and trigger spurious saves and events.
+  7. Portal elements have prefixed IDs (acportal||…). Filter predicates must exclude them or treat them as read-only.
+
+  Recommended approach: offer a CSS "dim/hide" mode first; it's safe and enough for small canvases. Add a "materialized view" mode (a stash
+  re-injected on save, with the deterministic rules above) only for scale, behind the measurements in stage 4. For a 215k-node library, views
+  should feed a derived subgraph canvas, not load the full graph into one canvas.
+
+  6. Benchmark stages
+
+  All stages run in an isolated vault on a pinned Obsidian version, with other plugins disabled and a fixed window size under Hyprland. Use a
+  seeded synthetic generator: N ∈ {500, 2k, 10k, 25k}, E ≈ 1.5N, a mix of text, file and group nodes, A* edges at 0%, 10% and 100%, some
+  collapsed groups, and YAML frontmatter of 5–20 keys. Instrument with performance.mark behind a dev flag, the DevTools performance panel and
+  heap snapshots.
+
+  ┌───────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Stage │                                                   What to measure                                                   │
+  ├───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ B0    │ Build the harness and record a baseline with no code changes                                                        │
+  ├───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ B1    │ Time to open (importData, first paint) and metadata indexing time                                                   │
+  ├───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ B2    │ Pan/zoom frame times (p50/p95, long tasks over 50 ms); dragging one node with 20 edges; dragging 100 selected nodes │
+  ├───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ B3    │ Latency of one setData; bulk color change for k ∈ {10, 100, 1000}, counting history entries and saves               │
+  ├───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ B4    │ Undo/redo latency; heap and retained CanvasNode count after 50 cycles                                               │
+  ├───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ B5    │ A* time per edge, timeout count, total time at drag end                                                             │
+  ├───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ B6    │ Apply/clear view: time, file byte-identical, no history entries, backlink/search selects the correct node           │
+  ├───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ B7    │ YAML parse cost per node and cache hit rate while typing                                                            │
+  └───────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  Draft acceptance checks, to be adjusted against the B0 baseline:
+  - No regression greater than 10% against baseline.
+  - Bulk update with k=1000 on N=10k takes under 1 s and produces exactly 1 history entry and 1 save.
+  - Toggling a view takes under 200 ms at N=10k, adds no history entries and leaves the file byte-identical.
+  - No single A* task runs longer than 50 ms.
+  - Heap returns to baseline ±5% after 50 undo/redo cycles.
+  - Pan p95 frame time under 16.7 ms at N=2k (a hypothesis target).
+
+  Priority for your plan
+
+  1. Before any view or bulk work: fixes A (skip the unused getData now; add the transaction API), C, the ID-based offsets from §4, and bug G.
+  2. During the filter engine work: a pure predicate engine over getData() snapshots, plus the §5 rules and B6 tests.
+  3. After B0–B5 measurements: routing fixes H–K, then B, D–F and M–O.
+  4. Bulk updates: build them on the A transaction API, committing one history entry.
+
+  Your provisional sequence holds. I'd move the A, C and G fixes and the B0 harness into step 1 or 2 rather than step 4, because the views and
+  bulk updates depend on them.

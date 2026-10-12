@@ -1,14 +1,18 @@
+// MKLS history rebinding authored by Codex (LLM agent).
 import { Notice } from "obsidian"
 import { Canvas, CanvasView } from "src/@types/Canvas"
 import { CURRENT_SPEC_VERSION } from "src/utils/migration-helper"
 import CanvasExtension from "./canvas-extension"
+import { canvasImports } from '../utils/import-coordinator'
 
 export default class MetadataCanvasExtension extends CanvasExtension {
   isEnabled() { return true }
 
   private canvasCssclassesCache: Map<CanvasView, string[]> = new Map()
+  private metadataTargets = new WeakMap<Canvas, object>()
 
   init(): void {
+    this.plugin.registerEvent(this.plugin.app.workspace.on('advanced-canvas:data-loaded:after', (canvas: Canvas) => this.onCanvasChanged(canvas)))
     this.plugin.registerEvent(this.plugin.app.workspace.on(
       'advanced-canvas:canvas-changed',
       (canvas: Canvas) => this.onCanvasChanged(canvas)
@@ -29,6 +33,8 @@ export default class MetadataCanvasExtension extends CanvasExtension {
     const metadata = canvas.getData()?.metadata
     if (!metadata || metadata.version !== CURRENT_SPEC_VERSION)
       return void new Notice("Metadata node not found or version mismatch. Should have been migrated (but wasn't).")
+    if (this.metadataTargets.get(canvas) === metadata) return
+    this.metadataTargets.set(canvas, metadata)
 
     // Add proxy to metadata to listen for changes
     const that = this // eslint-disable-line @typescript-eslint/no-this-alias -- For patcher
@@ -40,6 +46,7 @@ export default class MetadataCanvasExtension extends CanvasExtension {
       },
       set(target: Record<string, unknown>, key: string, value: unknown) {
         target[key] = value
+        canvasImports.changed(canvas)
 
         that.plugin.app.workspace.trigger('advanced-canvas:canvas-metadata-changed', canvas)
         canvas.requestSave()

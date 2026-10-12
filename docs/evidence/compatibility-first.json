@@ -1,0 +1,38 @@
+{
+  "checks": [
+    {
+      "name": "native node YAML and unknown fields survive edit/save",
+      "passed": true
+    },
+    {
+      "name": "native edge YAML survives",
+      "passed": true
+    },
+    {
+      "name": "native view configuration survives",
+      "passed": true
+    },
+    {
+      "name": "native native copy/paste remaps IDs with YAML",
+      "passed": true
+    },
+    {
+      "name": "upstream node YAML and unknown fields survive edit/save",
+      "passed": true
+    },
+    {
+      "name": "upstream edge YAML survives",
+      "passed": true
+    },
+    {
+      "name": "upstream view configuration survives",
+      "passed": true
+    },
+    {
+      "name": "upstream native copy/paste remaps IDs with YAML",
+      "passed": true
+    }
+  ],
+  "passed": 8,
+  "fixture": "Compatibility-1791841489249.canvas"
+}

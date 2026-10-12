@@ -1,11 +1,11 @@
 {
-  "id": "advanced-canvas",
-  "name": "Advanced Canvas",
-  "version": "7.1.0",
-  "minAppVersion": "1.13.0",
-  "description": "Supercharge your canvas experience! Create presentations, flowcharts and more!",
-  "author": "Developer-Mike",
-  "authorUrl": "https://github.com/Developer-Mike",
+  "id": "mkls-advanced-canvas",
+  "name": "MKLS Advanced Canvas",
+  "version": "7.1.0-mkls.1",
+  "minAppVersion": "1.14.4",
+  "description": "Node and edge frontmatter, saved graph views, and Advanced Canvas tools for MKLS.",
+  "author": "Vicente Lermanda; based on Developer-Mike's Advanced Canvas",
+  "authorUrl": "https://github.com/vlermandac/mkls-advanced-canvas",
   "fundingUrl": "https://ko-fi.com/X8X27IA08",
   "isDesktopOnly": false
 }

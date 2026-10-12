@@ -1,0 +1,21 @@
+{
+  "authorship": "Codex and Claude (LLM agents)",
+  "version": "7.1.0-mkls.1",
+  "baseline": "4b8630c641bec6f6329adb8436a4d35752280d74",
+  "sourceBranch": "mkls-property-graph",
+  "testedApp": "Obsidian 1.14.4",
+  "bundleSha256": {
+    "main.js": "c9dc7138ef661c9ab9329c7043975a774c98249f6680ecd7556633fdccf18f94",
+    "styles.css": "df6ff45eb18a52c0d2cca65766f2e3f82fc170e92dabe1b5bb00febef2c1ce23",
+    "manifest.json": "664d65978c0f58729478544cf6aeadf456b12d6611982702a05b6606ce7f56ec"
+  },
+  "package": "mkls-advanced-canvas-7.1.0-mkls.1.zip",
+  "packageSha256": "7ab29f1d0288377ed15753cd1e93b37ae28a88606cfde69029e816adcb5ea82b",
+  "checks": {
+    "unit": 93,
+    "nativeFinal": 89,
+    "vanillaAndUpstream": 8,
+    "jsonCanvasFixtures": 87
+  },
+  "notes": "Native timing builds are separately qualified in PERFORMANCE.md. Final artifact includes the native serialization-cache correction."
+}

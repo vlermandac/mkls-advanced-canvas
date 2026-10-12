@@ -1,3 +1,24 @@
+# MKLS Advanced Canvas
+
+An independently maintained fork with **node and edge YAML properties** and **saved graph views**. Changes are authored by Codex and Claude (LLM agents). Upstream attribution and GPL-3.0 licensing are retained; these changes are maintained in [our own fork](https://github.com/vlermandac/mkls-advanced-canvas).
+
+- Frontmatter is editable on individual text, file, link and group nodes and on edges. Rendering shows the body or label.
+- Saved views filter typed properties on nodes and edges while retaining the complete canvas for saving and undo.
+- Functional controls and commands are included. View predicates currently use a JSON editor; visual UI design is deferred.
+- Performance improvements cover cached metadata parsing, incremental filters, selection updates, patch disposal and batched history/save work. Large overview rendering remains a measured limitation.
+
+Read [usage and storage contract](docs/PROPERTY_GRAPH.md), [performance evidence](docs/PERFORMANCE.md), and [development plan](docs/PLAN.md).
+
+## Install this fork
+
+Build with `npm ci` and `npm run build`. Disable upstream Advanced Canvas, then put `dist/main.js`, `dist/styles.css` and `dist/manifest.json` into your vault's `.obsidian/plugins/mkls-advanced-canvas/` directory. Enable **MKLS Advanced Canvas**. Keep a copy of your canvases and existing plugin configuration when trying a development build. The fork has its own plugin ID and settings; both variants cannot run together.
+
+`npm run check` checks TypeScript and lint. `npm test` runs focused regressions. `npm run bench:filter` measures the pure filter engine. `npm run package` creates a local zip after building. Native QA tools require an explicitly supplied isolated QA vault.
+
+## Inherited upstream documentation
+
+The material below describes upstream features. Its community-install links install upstream Advanced Canvas, not this fork.
+
 <h3 align="center">
     <picture>
         <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Developer-Mike/obsidian-advanced-canvas/main/assets/docs/logo-dark.png">

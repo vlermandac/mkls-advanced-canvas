@@ -1,0 +1,4 @@
+npm notice run mkls-advanced-canvas@7.1.0-mkls.1 check
+npm notice run tsc --noEmit && npm run lint
+npm notice run mkls-advanced-canvas@7.1.0-mkls.1 lint
+npm notice run eslint src/ --ext .ts,.tsx
