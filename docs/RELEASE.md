@@ -1,10 +1,13 @@
-# Development build 7.1.0-mkls.1
+# Development build 7.1.0-mkls.2
 
-Authored by Codex and Claude (LLM agents), 2026-10-12. Based on upstream 7.1.0 at the commit in FORK.md. GPL-3.0 license and attribution retained.
+Authored by Codex and Claude (LLM agents), 2026-10-13. Based on upstream 7.1.0 at the commit in FORK.md. GPL-3.0 license and attribution retained.
 
 ## Included
 
 - Per-instance YAML on text, file, link and group nodes and on edges; editing/source/recovery support, with YAML hidden in rendered content.
+- Canvas-local node/edge schemas with field types, required/nullable rules, defaults/options and additional-field policy; guided schema editor and explicit default actions.
+- Docked/small-window property editor with typed fields and YAML mode; toolbar collision handling and schema-invalid drafts remain editable.
+- Edge labels use the node-body font and text size.
 - Saved typed graph views, node/edge endpoint rules, All, duplicate/delete/edit/export, and independent window selections.
 - Complete canonical persistence and history, stable IDs, revision guards, explicit adoption, and disable/reload normalization.
 - Bounded metadata parsing/cache, incremental filters and selection updates, batched history/save work, spatial A* obstacle lookup, and routing cache.
@@ -18,7 +21,7 @@ Existing canvases require no bulk migration. Adoption of leading text-node YAML 
 
 ## Verification and limits
 
-Check/build and focused regressions are reproducible with the locked npm install. Small retained successful native reports and benchmark reports are in `docs/evidence/`. The larger generated fixtures remain in the isolated project QA vault. PERFORMANCE.md states measured hardware, sizes, contents and validity constraints.
+Check/build and focused regressions are reproducible with the locked npm install. Earlier mkls.1 native/regression and benchmark reports remain in `docs/evidence/`; their inline-editor selectors and counts describe that version. No stress tests, benchmark reruns or regression suite runs were performed for this follow-up. Type/lint and production build checks apply to the current artifact; visual property UX inspection uses QA only. The larger generated fixtures remain in the isolated project QA vault. PERFORMANCE.md states measured hardware, sizes, contents and validity constraints.
 
 The largest measured plain sparse model is 10,000 nodes / 30,000 edges. Broad overview rendering remains slow. Dense, grouped, media and A* have smaller separately measured envelopes. A complete 215k-node MKLS graph is unmeasured and unsupported as one native canvas. Use source-backed subgraphs and views. A* retains a bounded search budget; timeout results retry after a cooldown, and collapsed obstacle boxes bypass route caching.
 

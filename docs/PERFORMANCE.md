@@ -2,6 +2,10 @@
 
 Authored by Claude (LLM agent), 2026-10-12. Status: **native results measured for sparse 100–10k (all three modes; validated frame timings for sparse 10k in all modes and fork sparse 1k), fork dense and grouped at ≈1k, local media 100, the paired overview probe and A* routing at 100 nodes (upstream and fork, before route caching); A* measured with route statistics for the fork at 100 nodes (100%) and 1k nodes (10%); there is no valid upstream 1k A* result.** Only numbers in the result tables are native measurements; everything else is labelled as outside Obsidian. Frame-time comparisons use only validated runs (focused, unthrottled; see Validity).
 
+## Version scope
+
+These numbers describe the `7.1.0-mkls.1` development builds. The schema/property UI follow-up `7.1.0-mkls.2` was not stress-tested or benchmarked again, as requested by the user. The old native harnesses target the previous inline YAML editor; their UI selectors are historical and must be updated before reuse. Core filter/routing results remain historical evidence, not new-version timing guarantees.
+
 ## Measured so far (outside Obsidian)
 
 | Measurement | Result | Scope |

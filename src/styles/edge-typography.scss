@@ -1,0 +1,7 @@
+// Authored by Codex (LLM agent). Edge labels use the same body typography as text nodes.
+.canvas-wrapper .canvas-path-label,
+.canvas-wrapper .canvas-path-label textarea {
+  font-family: var(--font-text);
+  font-size: var(--font-text-size);
+  line-height: var(--line-height-normal);
+}

@@ -1,13 +1,16 @@
 # Properties and saved graph views
 
-Authored by Codex (LLM agent). Storage version 1; plugin `7.1.0-mkls.1`, minimum Obsidian 1.14.4. Native integration checked on that version. Private Canvas APIs are used; other versions need their own compatibility check.
+Authored by Codex (LLM agent). Storage version 1; plugin `7.1.0-mkls.2`, minimum Obsidian 1.14.4. Native integration checked on that version. Private Canvas APIs are used; other versions need their own compatibility check.
 
 ## Editing
 
-While editing a text node or edge label, its frontmatter appears in a separate YAML textarea delimited by `---`. Moving focus into that field keeps it open. Blur commits valid YAML, and clicking out hides it. Native body text and labels remain content without a YAML prefix.
+Select one node or edge to open its **Properties** panel. It is docked outside the canvas zoom transform, scrolls within a bounded height, collapses when requested and becomes a bottom sheet in narrow canvases. Deselecting or selecting multiple elements hides it. The native floating toolbar moves beside it only if their rectangles overlap. Rendered node bodies and edge labels never include the properties.
 
-Select any single node or edge and run **Edit selected node or edge frontmatter** for a source editor containing YAML followed by its body. File/link instances accept properties here; their content is edited in the linked file. Two nodes referencing the same note can have different properties. Group labels also retain their own properties. Portal projections are read-only and follow their local host's visibility; edit their source canvas. Collapsed groups stay collapsed while filtering; expand them to inspect member matches.
+**Fields** mode provides typed values and an **Add property** form. **YAML** mode keeps raw source and comments: leaving the textarea or pressing Ctrl/⌘+Enter applies; Esc restores its prior value. Enter applies a field, Tab moves between fields, and **Focus properties of selected node or edge** offers a keyboard entry point. The source editor button or **Edit selected node or edge frontmatter** command opens YAML followed by the body.
 
+File/link instances have their own properties; linked content is edited in the linked file. Two nodes referencing one note can have different values. Groups also have their own properties. Edge properties work even with no label. Portal projections are read-only and follow their local host's visibility; edit their source canvas. Collapsed groups stay collapsed while filtering; expand them to inspect member matches.
+
+Edge labels use Obsidian's text font and text size settings, matching normal node-body text and its canvas zoom scaling. Per-node custom formatting such as Markdown headings remains local to the node.
 ```yaml
 status: accepted
 kind: theorem
@@ -19,9 +22,26 @@ source: "[[My note]]"
 
 Valid properties are a mapping of finite numbers, strings, booleans, null, lists and nested mappings. YAML 1.2 core semantics are used. Dates remain strings; predicates recognize strict ISO dates and zoned datetimes for ordering. Duplicate keys, non-finite numbers, cycles and unsupported YAML tags produce diagnostics. Raw YAML comments and formatting are preserved. A wikilink in a property is an opaque string; it is not indexed as an Obsidian backlink. These records are indexed for this plugin's views; the native global Properties/Bases engine does not index them.
 
-Invalid inline YAML is retained as `draft` while committed YAML continues to drive views. A valid property commit is one history action. Cancelling a changed source editor retains a recovery draft without changing the graph. Replaced or unloaded inline editors retain YAML only, so recovery cannot bring back an old body. Recovered drafts are labelled; stale revisions require an explicit recovery action. Successful saves consume the recovery pointer, and a bounded archive retains the latest 20 drafts per element. Recovery files are under the plugin's `drafts/` directory and keyed by canvas path and element ID. Renaming a canvas does not relocate old recovery files; recover edits before renaming.
+Invalid YAML or a schema mismatch is retained as `draft` while committed YAML continues to drive views. A syntactically valid draft can still be completed in Fields mode, including several required fields one by one. Syntax/non-mapping errors use YAML mode. The panel shows the errors and a discard action. A valid property commit is one history action. Cancelling a changed source editor retains a recovery draft without changing the graph. Replaced panel editors retain YAML only, so recovery cannot bring back an old body. Recovered drafts are labelled; stale revisions require an explicit recovery action. Successful saves consume the recovery pointer, and a bounded archive retains the latest 20 drafts per element. Recovery files are under the plugin's `drafts/` directory and keyed by canvas path and element ID. Renaming a canvas does not relocate old recovery files; recover edits before renaming.
 
 Existing text-node YAML is not automatically migrated. **Adopt selected text node frontmatter as properties** explicitly moves a leading `---` block into the property record and leaves its body. Adoption is undoable and refuses an existing property record.
+
+## Canvas schemas
+
+Run **Edit canvas node and edge property schema**. Switch between **Nodes** and **Edges**, add fields, choose their names and types, and set descriptions, required/null rules, optional defaults and allowed values. **Save schema** stores the definition in this canvas; **Remove schema** keeps all element values and views. Each schema change is one undo action. An editor opened against an older schema cannot overwrite a newer one.
+
+| Without a schema | With a schema |
+| --- | --- |
+| Add arbitrary named properties with a type and value | Predefined fields appear with their type, description and required marker |
+| Values can be text, finite numbers, booleans, null, lists or objects | Values must match the declared type and optional allowed-value list |
+| No required/default rules | Required means presence; zero, false and empty text count as values |
+| Free additions | Additional fields are allowed by default; turn off **Allow additional properties** to close the schema |
+
+Schema types are `text`, `number`, `boolean`, `date`, `list` and `object`. A date is a valid `YYYY-MM-DD` calendar string. Lists/objects accept finite JSON-compatible contents; their nested structure is not separately constrained by this first schema version. Names are literal top-level keys, including dots; they are not path expressions. Null requires **Allow null**; absence remains separate. Allowed values use an optional JSON list (for example `["accepted", "provisional"]`). Defaults use appropriate typed controls, with JSON for lists/objects.
+
+Schema changes do not rewrite existing elements. Existing extra or wrong-typed values stay visible and can be corrected; a closed schema never deletes them. **Use default** or **Add N default values** fills absent fields explicitly in the panel. **Apply schema defaults to selected nodes and edges** applies valid changes to the selection as one action. Existing false/zero/null/empty values are never overwritten by defaults. That command refuses unresolved drafts or changes that would still violate the schema; complete those through the panel.
+
+If several required fields are missing, the panel retains partial edits as a draft and lets you complete the typed fields. Once the whole draft meets the schema, it becomes committed properties and views update. Editing a body or schema during unsaved input refuses a stale property commit and keeps recovery data. Unsupported schema versions are preserved and property editing becomes read-only.
 
 ## Views
 
@@ -63,7 +83,7 @@ The same record is stored on every node and edge:
 "propertyGraph": {"version": 1, "yaml": "status: accepted\n"}
 ```
 
-An optional `draft` contains invalid inline YAML. The parsed map is disposable, never a second persistent source of truth. Native `text`, `label`, `file`, IDs and positions remain native. Unknown fields within recognized version-1 records are preserved on editing. Unsupported versions and malformed records are preserved and refused for writes.
+An optional `draft` contains unapplied YAML or schema-invalid values. The parsed map is disposable, never a second persistent source of truth. Native `text`, `label`, `file`, IDs and positions remain native. Unknown fields within recognized version-1 records are preserved on editing. Unsupported versions and malformed records are preserved and refused for writes.
 
 Canvas-level definitions are separate from upstream frontmatter:
 
@@ -77,6 +97,24 @@ Canvas-level definitions are separate from upstream frontmatter:
   }
 }
 ```
+
+An optional schema shares that configuration namespace, independently versioned:
+
+```json
+"schema": {
+  "version": 1,
+  "nodes": {
+    "allowAdditional": true,
+    "fields": [{"key":"status","type":"text","required":true,"default":"provisional","options":["accepted","provisional"]}]
+  },
+  "edges": {
+    "allowAdditional": false,
+    "fields": [{"key":"relation","type":"text","required":true}]
+  }
+}
+```
+
+Saving a schema preserves view definitions and other namespace fields. Removing it preserves element properties. Unknown fields in recognized schemas/fields are retained; malformed or future schemas are shown read-only.
 
 Unrecognized view entries remain stored, although only valid definitions appear in the selector. Unknown configuration versions are not rewritten. The fork's schema version is independent of Advanced JSON Canvas's version.
 

@@ -1,8 +1,8 @@
 # Advanced Canvas property graph fork implementation plan
 
-Status: Properties, saved views and measured optimizations are implemented in development build 7.1.0-mkls.1. Final native checks pass and the package is ready; own-fork review is the delivery step. Broad large-graph overview rendering remains limited.
+Status: Development build 7.1.0-mkls.2 adds custom canvas schemas and improved property editing to the completed property/view foundation. Type/lint/build checks and one QA visual inspection are complete. The own-fork draft PR remains open; mkls.1 performance evidence is retained, with no new stress runs.
 
-Updated: 2026-10-12.
+Updated: 2026-10-13.
 
 Maintainer: Codex, the main MKLS agent. Claude supports source and performance research through the existing Herdr `mkls` session. This plan is authored by an LLM agent and will be updated as tasks, decisions and evidence change.
 
@@ -261,3 +261,24 @@ Remaining exploratory work is intentionally visible: template-specific native ch
 Final routing reports `astar-fork-final-100` and `astar-fork-final-1000-10` completed without failures, warnings or route timeouts. They measure 100 nodes/300 A* edges and 1,000 nodes/3,000 edges with 10% A*, respectively. Larger routing workloads remain unmeasured.
 
 Development package: `evidence/releases/final-7.1.0-mkls.1/mkls-advanced-canvas-7.1.0-mkls.1.zip`, with SHA256SUMS. The package contents match the tested production bundle.
+
+Delivered: commit `d630418` on `mkls-property-graph`; [own-fork draft PR #1](https://github.com/vlermandac/mkls-advanced-canvas/pull/1). Implementation checkout is clean. No merge, release publication or study-vault install was performed.
+
+## Active follow-up: schemas and property editing (2026-10-13)
+
+User assigned edge typography and custom canvas node/edge schemas to Codex, and property UX/UI analysis and improvements to the existing Claude agent. The supplied screenshot shows the native toolbar overlapping the in-node YAML panel. No Impeccable use. The user requested no further stress tests.
+
+- [x] S7.1 Delegate and agree exclusive ownership, storage/API and no-schema/schema editing rules with Claude.
+- [x] S7.2 Match native edge labels to Obsidian node-body text font/size and zoom behavior.
+- [x] S7.3 Implement separate versioned node/edge schema definitions: literal field names, text/number/boolean/date/list/object, required/nullable/default/options, and explicit allowAdditional policy.
+- [x] S7.4 Add a guided schema editor/removal and selected-element defaults command with one undo action and revision guards. Schema changes do not rewrite existing values.
+- [x] S7.5 Preserve raw YAML/comments when applying missing defaults; preserve false/zero/null/missing distinctions, unknown fields and unsupported schemas.
+- [x] S7.6 Claude: replace toolbar-interfering inline panels with a bounded screen-space property editor; typed fields/free creation without schema, predefined fields/default suggestions with schema, raw YAML mode and keyboard access.
+- [x] S7.7 Keep syntactically valid schema-invalid drafts editable as fields so required properties can be completed one by one. Preserve committed values for views and recovery/revision guards.
+- [x] S7.8 Complete type/lint/build checks, native visual UX inspection in QA, documentation, development package and own-fork draft PR update. No stress tests or benchmark reruns; earlier reports stay qualified to mkls.1.
+
+Shared contract/ownership: [schema and UI brief](SCHEMA_UI_BRIEF.md). UX findings: [Claude's analysis](PROPERTY_UX.md). Queries/bulk updates remain deferred.
+
+Follow-up inspection: node and edge font settings match at16px in QA; the property dock stays outside canvas transforms and the toolbar moves beside it. A clean vault-scoped renderer reload removed stale listeners from an older plugin instance (cause unproven). Teardown now always invokes base cleanup even if editor flush fails. Visual scope and uninspected cases are stated in the UX report.
+
+Current package: `evidence/releases/final-7.1.0-mkls.2/mkls-advanced-canvas-7.1.0-mkls.2.zip`, with SHA256SUMS. Installed QA files and packaged production files match. [Schema guide](../docs/PROPERTY_GRAPH.md) and [two-node example](../examples/property-schema.canvas) document the new workflow.

@@ -17,7 +17,16 @@ export interface Condition {
 export interface FilterGroup { kind: 'all' | 'any' | 'none'; conditions: Predicate[] }
 export type Predicate = Condition | FilterGroup
 export interface SavedView { id: string; name: string; mode: 'nodes' | 'edges'; nodes?: Predicate; edges?: Predicate }
-export interface GraphConfiguration { version: 1; views: SavedView[] }
+export type SchemaFieldType = 'text' | 'number' | 'boolean' | 'date' | 'list' | 'object'
+export interface SchemaIssue { key: string; message: string }
+export interface SchemaField {
+  key: string; type: SchemaFieldType; description?: string
+  required?: boolean; nullable?: boolean; default?: PropertyValue; options?: PropertyValue[]
+  [key: string]: unknown
+}
+export interface ElementSchema { fields: SchemaField[]; allowAdditional: boolean; [key: string]: unknown }
+export interface CanvasPropertySchema { version: 1; nodes: ElementSchema; edges: ElementSchema; [key: string]: unknown }
+export interface GraphConfiguration { version: 1; views: SavedView[]; schema?: CanvasPropertySchema }
 export interface Visibility { nodes: Set<string>; edges: Set<string> }
 // Null denotes malformed property YAML. An empty mapping denotes no properties.
 export type PropertyLookup = (element: GraphElement) => PropertyMap | null

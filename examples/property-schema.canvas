@@ -1,0 +1,103 @@
+{
+  "metadata": {
+    "version": "1.0-1.0",
+    "frontmatter": {},
+    "propertyGraph": {
+      "version": 1,
+      "views": [],
+      "schema": {
+        "version": 1,
+        "nodes": {
+          "allowAdditional": true,
+          "fields": [
+            {
+              "key": "kind",
+              "type": "text",
+              "required": true,
+              "options": [
+                "theorem",
+                "definition"
+              ],
+              "description": "What this node represents"
+            },
+            {
+              "key": "status",
+              "type": "text",
+              "default": "draft",
+              "options": [
+                "draft",
+                "accepted"
+              ]
+            },
+            {
+              "key": "reviewed",
+              "type": "boolean",
+              "default": false
+            }
+          ]
+        },
+        "edges": {
+          "allowAdditional": false,
+          "fields": [
+            {
+              "key": "relation",
+              "type": "text",
+              "required": true,
+              "options": [
+                "uses",
+                "supports"
+              ]
+            },
+            {
+              "key": "weight",
+              "type": "number",
+              "default": 1
+            }
+          ]
+        }
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "theorem",
+      "type": "text",
+      "text": "Theorem",
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 160,
+      "propertyGraph": {
+        "version": 1,
+        "yaml": "# Canvas instance properties\nkind: theorem\nstatus: accepted\n"
+      }
+    },
+    {
+      "id": "definition",
+      "type": "text",
+      "text": "Definition",
+      "x": 500,
+      "y": 0,
+      "width": 300,
+      "height": 160,
+      "propertyGraph": {
+        "version": 1,
+        "yaml": "kind: definition\n"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "uses",
+      "fromNode": "theorem",
+      "fromSide": "right",
+      "toNode": "definition",
+      "toSide": "left",
+      "label": "uses",
+      "propertyGraph": {
+        "version": 1,
+        "yaml": "relation: uses\n"
+      }
+    }
+  ]
+}

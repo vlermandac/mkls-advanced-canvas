@@ -1,0 +1,2 @@
+npm notice run mkls-advanced-canvas@7.1.0-mkls.2 build
+npm notice run node esbuild.config.mjs production

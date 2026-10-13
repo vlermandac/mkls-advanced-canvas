@@ -1,6 +1,7 @@
 // MKLS fork integration authored by Codex (LLM agent).
 import { Plugin, Notice, requireApiVersion, TextFileView } from 'obsidian'
 import PropertyGraphCanvasExtension from './canvas-extensions/property-graph-canvas-extension'
+import PropertySchemaCanvasExtension from './canvas-extensions/property-schema-canvas-extension'
 import { Canvas, CanvasView } from './@types/Canvas'
 import type { CanvasData } from './@types/AdvancedJsonCanvas'
 import { canonicalHistory } from './utils/canonical-history'
@@ -120,6 +121,7 @@ const CANVAS_EXTENSIONS: CanvasExtensionConstructor[] = [
   BetterReadonlyCanvasExtension,
   ReadingModeFixCanvasExtension,
   PropertyGraphCanvasExtension,
+  PropertySchemaCanvasExtension,
   GroupCanvasExtension,
   NodeTemplatesCanvasExtension,
   VariableBreakpointCanvasExtension,
@@ -180,24 +182,30 @@ export default class AdvancedCanvasPlugin extends Plugin {
     // canonical records so native saves after disable cannot persist projections.
     // Component.unload removes registered hooks BEFORE onunload. Run this
     // normalization first, while upstream's serialization adapters are active.
-    if (this.canvasExtensions) {
-      this.canvasExtensions.find((extension): extension is PropertyGraphCanvasExtension => extension instanceof PropertyGraphCanvasExtension)?.prepareUnload()
-      for (const canvas of this.getCanvases()) {
-        try {
-          const transform = (data: CanvasData) => this.app.workspace.trigger('advanced-canvas:data-requested', canvas, data)
-          canvas.history.data = (canvas.history.data as CanvasData[]).map(data => canonicalHistory(data, transform))
-          const transient = [...canvas.nodes.values()].some(node => {
-            const data = node.getData()
-            return PortalsCanvasExtension.isPortalElement(node.id) || (data as CanvasGroupNodeData).collapsedData !== undefined || (data as CanvasFileNodeData).isPortalLoaded !== undefined
-          })
-          const data = canonicalHistory(canvas.getData(), transform)
-          if (transient) canvas.importData(data, true, true)
-          Reflect.set(canvas, 'data', data) // Native 1.14.4 serializer cache, refreshed without reading it.
-          for (const node of canvas.nodes.values()) node.collapseEl?.remove()
-        } catch (error) { console.error('Unable to restore canonical canvas on unload', error) }
+    try {
+      if (this.canvasExtensions) {
+        try { this.canvasExtensions.find((extension): extension is PropertyGraphCanvasExtension => extension instanceof PropertyGraphCanvasExtension)?.prepareUnload() }
+        catch (error) { console.error('Unable to flush property editors on unload', error) }
+        for (const canvas of this.getCanvases()) {
+          try {
+            const transform = (data: CanvasData) => this.app.workspace.trigger('advanced-canvas:data-requested', canvas, data)
+            canvas.history.data = (canvas.history.data as CanvasData[]).map(data => canonicalHistory(data, transform))
+            const transient = [...canvas.nodes.values()].some(node => {
+              const data = node.getData()
+              return PortalsCanvasExtension.isPortalElement(node.id) || (data as CanvasGroupNodeData).collapsedData !== undefined || (data as CanvasFileNodeData).isPortalLoaded !== undefined
+            })
+            const data = canonicalHistory(canvas.getData(), transform)
+            if (transient) canvas.importData(data, true, true)
+            Reflect.set(canvas, 'data', data) // Native 1.14.4 serializer cache, refreshed without reading it.
+            for (const node of canvas.nodes.values()) node.collapseEl?.remove()
+          } catch (error) { console.error('Unable to restore canonical canvas on unload', error) }
+        }
       }
+    } finally {
+      // Codex (LLM agent): never leave event/patch registrations behind because
+      // an editor or canonical-model normalization failed during hot reload.
+      super.unload()
     }
-    super.unload()
   }
   onunload() {}
 

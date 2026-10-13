@@ -1,7 +1,7 @@
 {
   "id": "mkls-advanced-canvas",
   "name": "MKLS Advanced Canvas",
-  "version": "7.1.0-mkls.1",
+  "version": "7.1.0-mkls.2",
   "minAppVersion": "1.14.4",
   "description": "Node and edge frontmatter, saved graph views, and Advanced Canvas tools for MKLS.",
   "author": "Vicente Lermanda; based on Developer-Mike's Advanced Canvas",

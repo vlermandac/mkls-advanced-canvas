@@ -27,3 +27,7 @@ npm run build
 ```
 
 Native tools require an explicitly supplied registered QA vault. They generate retained fixtures and report paths, and never target learner/source data. Native script assertions include real native editors, hit targets, model/disk/history persistence, groups, portals, multiwindow state and plugin disable/reload; they do not cover every third-party writer or mobile version.
+
+## Schema and UI follow-up
+
+`BUILD-schema-ui.json`, `schema-ui-check.txt` and `schema-ui-build.txt` record compilation/lint and the mkls.2 package. `schema-ui/` contains cropped QA-only UI captures from the single inspection described in PROPERTY_UX.md. The earlier93/89/8/87 counts above describe mkls.1; those suites and stress benchmarks were not rerun for mkls.2.

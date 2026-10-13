@@ -31,6 +31,9 @@ export function parseProperties(yaml: string): ParsedProperties {
     })
     if (errors.length) return { values: null, errors }
     const raw: unknown = doc.toJS({ mapAsMap: true, maxAliasCount: 50 })
+    // Codex (LLM agent): comments alone are an empty property map; an explicit
+    // YAML null scalar remains invalid because it has a contents node.
+    if (raw === null && doc.contents === null) return { values: Object.create(null) as PropertyMap, errors: [] }
     if (!(raw instanceof Map)) throw new TypeError('Frontmatter must be a property mapping')
     return { values: normalize(raw) as PropertyMap, errors: [] }
   } catch (error) {

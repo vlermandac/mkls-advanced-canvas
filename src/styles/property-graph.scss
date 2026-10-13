@@ -1,12 +1,6 @@
 // Authored by Codex (LLM agent): functional visibility and source editing only.
 .mkls-view-hidden { display: none !important; pointer-events: none !important; }
 .mkls-source-editor, .mkls-filter-editor { width: 100%; min-height: 180px; font-family: var(--font-monospace); }
-.mkls-frontmatter-panel {
-  position: absolute; bottom: calc(100% + 4px); left: 0; z-index: 10;
-  width: 100%; min-width: 220px; padding: 6px; background: var(--background-secondary);
-}
-.mkls-frontmatter-text { width: 100%; min-height: 65px; font-family: var(--font-monospace); }
-.mkls-frontmatter-delimiter { font-family: var(--font-monospace); }
 .mkls-view-select { max-width: 180px; }
 
 // Codex (LLM agent): rendering-only option; native overview class clears on zoom-in.
@@ -14,4 +8,117 @@
   .canvas-edges path.canvas-interaction-path,
   .canvas-edges polygon.canvas-path-end { display: none !important; }
   .canvas-edges path { transition: none !important; }
+}
+
+// Claude (LLM agent): screen-space Properties panel. It is a child of .canvas-wrapper, outside the
+// zoom transform, docked at the top inline-start corner (canvas controls are inline-end, the card
+// menu bottom centre). Narrow canvases get a bottom sheet instead.
+.mkls-property-panel {
+  position: absolute; z-index: var(--layer-cover);
+  top: var(--size-4-2); inset-inline-start: var(--size-4-2);
+  width: min(320px, calc(100% - 2 * var(--size-4-2)));
+  max-height: calc(100% - var(--size-4-2) - 72px);
+  display: flex; flex-direction: column;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-s);
+  font-size: var(--font-ui-small);
+  user-select: text; touch-action: auto;
+
+  &[data-layout="sheet"] {
+    top: auto; inset-inline: var(--size-4-2); bottom: 64px;
+    width: auto; max-height: 45%;
+  }
+  &.is-collapsed { max-height: none; width: auto; max-width: min(320px, calc(100% - 2 * var(--size-4-2))); }
+
+  button:not(.clickable-icon) { font-size: var(--font-ui-smaller); height: auto; padding: var(--size-2-2) var(--size-4-2); }
+  input[type="text"], input[type="date"], textarea, select { font-size: var(--font-ui-small); }
+}
+.is-phone .mkls-property-panel[data-layout="sheet"] { bottom: 0; inset-inline: 0; border-radius: var(--radius-m) var(--radius-m) 0 0; }
+
+.mkls-property-panel-header {
+  display: flex; align-items: center; gap: var(--size-2-2);
+  padding: var(--size-2-2) var(--size-2-3);
+  border-bottom: 1px solid var(--background-modifier-border);
+  .is-collapsed > & { border-bottom: none; }
+}
+.mkls-property-panel-toggle {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: var(--size-2-3);
+  background: none; box-shadow: none; border: none; padding: var(--size-2-2) var(--size-2-3); height: auto;
+  color: var(--text-normal); font-size: var(--font-ui-small); justify-content: flex-start;
+  &:hover { background-color: var(--background-modifier-hover); }
+}
+.mkls-property-panel-chevron { display: flex; color: var(--text-muted); transition: transform 100ms ease-in-out;
+  .is-collapsed & { transform: rotate(-90deg); }
+  .mod-rtl .is-collapsed & { transform: rotate(90deg); }
+}
+.mkls-property-panel-title { font-weight: var(--font-semibold); }
+.mkls-property-panel-subtitle { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mkls-property-panel-actions { display: flex; gap: 1px;
+  .clickable-icon.is-active { color: var(--text-accent); background-color: var(--background-modifier-hover); }
+}
+
+.mkls-property-panel-body {
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: var(--size-4-2) var(--size-4-3) var(--size-4-3);
+  display: flex; flex-direction: column; gap: var(--size-4-2);
+  &:empty { display: none; }
+}
+.mkls-property-panel-messages { display: flex; flex-direction: column; gap: var(--size-4-2); &:empty { display: none; } }
+.mkls-property-note {
+  padding: var(--size-4-2); border-radius: var(--radius-s);
+  background-color: var(--background-secondary); color: var(--text-muted);
+  &.mod-warning { color: var(--text-normal); border-inline-start: 3px solid var(--color-orange); }
+  &.mod-error { color: var(--text-normal); border-inline-start: 3px solid var(--text-error); }
+}
+.mkls-property-note-actions { display: flex; gap: var(--size-4-2); margin-top: var(--size-4-2); }
+.mkls-property-issues { margin: var(--size-2-2) 0 0; padding-inline-start: var(--size-4-5); font-family: var(--font-monospace); font-size: var(--font-ui-smaller); }
+
+.mkls-property-list { display: flex; flex-direction: column; gap: var(--size-2-2); }
+.mkls-property-section { margin-top: var(--size-2-3); color: var(--text-muted); font-size: var(--font-ui-smaller); font-weight: var(--font-semibold); }
+.mkls-property-empty, .mkls-property-hint, .mkls-property-absent { color: var(--text-faint); font-size: var(--font-ui-smaller); }
+
+.mkls-property-row {
+  display: grid; grid-template-columns: minmax(80px, 38%) minmax(0, 1fr) auto;
+  align-items: start; column-gap: var(--size-4-2); row-gap: var(--size-2-1);
+  padding: var(--size-2-1) 0;
+  &.is-missing .mkls-property-name { color: var(--text-muted); }
+  &.has-issue .mkls-property-name { color: var(--text-error); }
+}
+.mkls-property-key { display: flex; align-items: center; gap: var(--size-2-2); min-height: var(--input-height); min-width: 0; }
+.mkls-property-type { display: flex; color: var(--text-faint); --icon-size: var(--icon-xs); }
+.mkls-property-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mkls-property-required { color: var(--text-accent); }
+.mkls-property-value { min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: var(--size-2-1);
+  > input[type="checkbox"] { align-self: flex-start; margin-top: calc((var(--input-height) - 16px) / 2); }
+  > select { width: 100%; }
+}
+.mkls-property-input { width: 100%; }
+textarea.mkls-property-input { min-height: 3.5em; resize: vertical; }
+.mkls-property-remove { align-self: center; }
+.mkls-property-remove-spacer { width: calc(var(--icon-size) + 2 * var(--size-2-3)); }
+.mkls-property-issue, .mkls-property-description, .mkls-property-input-error { grid-column: 1 / -1; font-size: var(--font-ui-smaller); }
+.mkls-property-issue, .mkls-property-input-error { color: var(--text-error); &:empty { display: none; } }
+.mkls-property-description { color: var(--text-faint); }
+.mkls-property-preview {
+  display: block; white-space: pre; overflow-x: auto; max-height: 8em;
+  padding: var(--size-2-2) var(--size-4-2); border-radius: var(--radius-s);
+  background-color: var(--background-secondary); font-size: var(--font-ui-smaller);
+}
+.mkls-property-edit-yaml, .mkls-property-use-default, .mkls-property-add-item { align-self: flex-start; }
+.mkls-property-string-list { display: flex; flex-direction: column; gap: var(--size-2-1); }
+.mkls-property-string-item { display: flex; align-items: center; gap: var(--size-2-1); }
+
+.mkls-property-add { display: flex; flex-direction: column; gap: var(--size-2-3); border-top: 1px solid var(--background-modifier-border); padding-top: var(--size-4-2);
+  > .mod-cta { align-self: flex-start; }
+}
+.mkls-property-add-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--size-4-2); }
+.mkls-property-add-value { display: flex; align-items: center; gap: var(--size-4-2); > .mkls-property-input { flex: 1 1 auto; } }
+.mkls-property-defaults { align-self: flex-start; }
+
+.mkls-property-yaml {
+  width: 100%; min-height: 6em; max-height: 50vh; resize: vertical;
+  font-family: var(--font-monospace); font-size: var(--font-ui-smaller); line-height: var(--line-height-normal);
+  white-space: pre; overflow-wrap: normal; overflow-x: auto;
 }

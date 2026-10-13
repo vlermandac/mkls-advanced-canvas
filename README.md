@@ -4,7 +4,9 @@ An independently maintained fork with **node and edge YAML properties** and **sa
 
 - Frontmatter is editable on individual text, file, link and group nodes and on edges. Rendering shows the body or label.
 - Saved views filter typed properties on nodes and edges while retaining the complete canvas for saving and undo.
-- Functional controls and commands are included. View predicates currently use a JSON editor; visual UI design is deferred.
+- Functional controls and commands are included. View predicates currently use a JSON editor.
+- Canvas-specific node and edge schemas define field types, required values, defaults and allowed values. Properties use a docked typed editor with a raw YAML mode.
+- Edge labels use node-body typography.
 - Performance improvements cover cached metadata parsing, incremental filters, selection updates, patch disposal and batched history/save work. Large overview rendering remains a measured limitation.
 
 Read [usage and storage contract](docs/PROPERTY_GRAPH.md), [performance evidence](docs/PERFORMANCE.md), and [development plan](docs/PLAN.md).
@@ -13,7 +15,7 @@ Read [usage and storage contract](docs/PROPERTY_GRAPH.md), [performance evidence
 
 Build with `npm ci` and `npm run build`. Disable upstream Advanced Canvas, then put `dist/main.js`, `dist/styles.css` and `dist/manifest.json` into your vault's `.obsidian/plugins/mkls-advanced-canvas/` directory. Enable **MKLS Advanced Canvas**. Keep a copy of your canvases and existing plugin configuration when trying a development build. The fork has its own plugin ID and settings; both variants cannot run together.
 
-`npm run check` checks TypeScript and lint. `npm test` runs focused regressions. `npm run bench:filter` measures the pure filter engine. `npm run package` creates a local zip after building. Native QA tools require an explicitly supplied isolated QA vault.
+`npm run check` checks TypeScript and lint. `npm test` runs focused regressions. `npm run bench:filter` measures the pure filter engine. `npm run package` creates a local zip after building. Native QA tools require an explicitly supplied isolated QA vault. The old native UI/benchmark scripts target the mkls.1 inline editor; their selectors need updating before reuse with the docked editor.
 
 ## Inherited upstream documentation
 

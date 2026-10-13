@@ -14,13 +14,16 @@ import Patcher from '../patchers/patcher'
 import { DraftStore, SourceDraft, sourceRevision } from '../property-graph/drafts'
 import PortalsCanvasExtension from './portals-canvas-extension'
 import { canvasImports } from '../utils/import-coordinator'
+// Claude (LLM agent): screen-space property panel and schema checks on every property write path.
+import PropertyPanel, { type CommitResult, type PanelSnapshot } from '../property-graph/property-panel'
+import { schemaFor, validateElementProperties } from '../property-graph/schema'
 
 type Element = CanvasNode | CanvasEdge
 type Data = CanvasNodeData | CanvasEdgeData
 interface State {
   canvas: Canvas; service: PropertyService; active?: string; visible: Visibility
   frame?: number; dispose: () => void
-  panels: Map<Element, HTMLTextAreaElement>; labels: WeakSet<object>
+  panel?: PropertyPanel; labels: WeakSet<object>
   labelDisposers: Map<CanvasEdge, () => void>
   endpoints: Map<string, string>
   portalElements: Map<string, Set<Element>>
@@ -47,14 +50,21 @@ function bodyOf(data: Data): string {
   return ''
 }
 
+// Claude (LLM agent): schema helpers shared by the panel, source editor and adoption.
+const schemaRevision = (canvas: Canvas): string => JSON.stringify([canvas.metadata?.propertyGraph?.version, canvas.metadata?.propertyGraph?.schema])
+function schemaIssues(canvas: Canvas, data: Data, values: Parameters<typeof validateElementProperties>[2]): string[] {
+  return validateElementProperties(canvas.metadata?.propertyGraph, isEdge(data) ? 'edges' : 'nodes', values).map(issue => issue.key ? `${issue.key}: ${issue.message}` : issue.message)
+}
+
 class SourceModal extends Modal {
   private source: HTMLTextAreaElement | undefined
   private saved = false
   private initialSource = ''
   private revision: string
+  private schema: string
   private file: string
   constructor(app: AdvancedCanvasPlugin['app'], private element: Element, private commit: (data: Data, history?: boolean) => void, private drafts: DraftStore, private recovered?: SourceDraft) {
-    super(app); this.file = element.canvas.view.file.path; this.revision = sourceRevision(asElement(element.getData()))
+    super(app); this.file = element.canvas.view.file.path; this.revision = sourceRevision(asElement(element.getData())); this.schema = schemaRevision(element.canvas)
   }
   private current(): Element | undefined {
     if (this.element.canvas.view.file.path !== this.file) return undefined
@@ -82,6 +92,9 @@ class SourceModal extends Modal {
         if (parsed.errors.length) throw new Error(parsed.errors.map(e => `${e.line}:${e.column} ${e.message}`).join('\n'))
         const current = this.current()
         if (!current || sourceRevision(asElement(current.getData())) !== this.revision) throw Error('The canvas or element changed. Close to retain this draft, then reopen the current element.')
+        if (schemaRevision(current.canvas) !== this.schema) throw Error('The canvas schema changed. Close to retain this draft, then reopen the current element.')
+        const issues = schemaIssues(current.canvas, current.getData(), parsed.values!)
+        if (issues.length) throw Error('Schema: ' + issues.join('; '))
         if (current.canvas.readonly || PortalsCanvasExtension.isPortalElement(current.id)) throw Error('This element is read-only; edit the source canvas instead')
         if (!writableRecord(current.getData())) throw Error('Unsupported property record; original data is preserved')
         const record = { ...current.getData().propertyGraph, version: 1 as const, yaml: split.yaml }; delete record.draft
@@ -140,39 +153,42 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
     // Store construction is deferred below with other subclass state.
     const events = this.plugin.app.workspace
     this.plugin.registerEvent(events.on('advanced-canvas:canvas-changed', canvas => { this.attach(canvas); this.schedule(canvas); this.controls(canvas) }))
-    this.plugin.registerEvent(events.on('advanced-canvas:node-added', (canvas, node) => { this.attach(canvas); this.schedule(canvas, node); this.editing(canvas, node, node.isEditing) }))
+    this.plugin.registerEvent(events.on('advanced-canvas:node-added', (canvas, node) => { this.attach(canvas); this.schedule(canvas, node) }))
     this.plugin.registerEvent(events.on('advanced-canvas:edge-added', (canvas, edge) => { this.attach(canvas); this.hookLabel(canvas, edge); this.schedule(canvas, edge) }))
-    this.plugin.registerEvent(events.on('advanced-canvas:node-changed', (canvas, node) => { this.schedule(canvas, node); this.editing(canvas, node, node.isEditing) }))
+    this.plugin.registerEvent(events.on('advanced-canvas:node-changed', (canvas, node) => { this.schedule(canvas, node); this.refreshPanel(canvas, node) }))
     this.plugin.registerEvent(events.on('advanced-canvas:node-text-content-changed', (canvas, node) => this.schedule(canvas, node)))
     this.plugin.registerEvent(events.on('advanced-canvas:node-moved', (canvas, node) => this.schedule(canvas, node, false)))
     this.plugin.registerEvent(events.on('advanced-canvas:node-resized', (canvas, node) => this.schedule(canvas, node, false)))
-    this.plugin.registerEvent(events.on('advanced-canvas:node-editing-state-changed', (canvas, node, editing) => this.editing(canvas, node, editing)))
-    this.plugin.registerEvent(events.on('advanced-canvas:node-rendered', (canvas, node) => this.editing(canvas, node, node.isEditing)))
+    // Claude (LLM agent): the panel follows the selection and hides on deselection.
+    this.plugin.registerEvent(events.on('advanced-canvas:selection-changed', canvas => this.showPanel(canvas)))
+    this.plugin.registerEvent(events.on('advanced-canvas:readonly-changed', canvas => this.states.get(canvas)?.panel?.refresh(true)))
     this.plugin.registerEvent(events.on('advanced-canvas:edge-changed', (canvas, edge) => {
-      this.hookLabel(canvas, edge); const state = this.states.get(canvas); this.applyElement(state, edge)
+      this.hookLabel(canvas, edge); const state = this.states.get(canvas); this.applyElement(state, edge); this.refreshPanel(canvas, edge)
       const ends = edge.from.node.id + '\u0000' + edge.to.node.id
       if (state && state.endpoints.get(edge.id) !== ends) { state.endpoints.set(edge.id, ends); this.schedule(canvas, edge) }
     }))
-    this.plugin.registerEvent(events.on('advanced-canvas:edge-data-changed', (canvas, edge) => this.schedule(canvas, edge)))
-    this.plugin.registerEvent(events.on('advanced-canvas:canvas-metadata-changed', canvas => { this.schedule(canvas, undefined, false); this.controls(canvas) }))
-    this.plugin.registerEvent(events.on('advanced-canvas:undo', canvas => this.schedule(canvas)))
-    this.plugin.registerEvent(events.on('advanced-canvas:redo', canvas => this.schedule(canvas)))
+    this.plugin.registerEvent(events.on('advanced-canvas:edge-data-changed', (canvas, edge) => { this.schedule(canvas, edge); this.refreshPanel(canvas, edge) }))
+    this.plugin.registerEvent(events.on('advanced-canvas:canvas-metadata-changed', canvas => { this.schedule(canvas, undefined, false); this.controls(canvas); this.refreshPanel(canvas) }))
+    this.plugin.registerEvent(events.on('advanced-canvas:undo', canvas => { this.schedule(canvas); this.refreshPanel(canvas) }))
+    this.plugin.registerEvent(events.on('advanced-canvas:redo', canvas => { this.schedule(canvas); this.refreshPanel(canvas) }))
     this.plugin.registerEvent(events.on('advanced-canvas:data-loaded:before', (canvas, data, _setData, clearCanvas) => this.beforeReload(canvas, data, clearCanvas)))
-    this.plugin.registerEvent(events.on('advanced-canvas:data-loaded:after', canvas => { this.schedule(canvas); this.controls(canvas); for (const edge of canvas.edges.values()) this.hookLabel(canvas, edge) }))
+    this.plugin.registerEvent(events.on('advanced-canvas:data-loaded:after', canvas => { this.schedule(canvas); this.controls(canvas); for (const edge of canvas.edges.values()) this.hookLabel(canvas, edge); this.showPanel(canvas) }))
     this.plugin.registerEvent(events.on('advanced-canvas:node-removed', (canvas, node) => {
-      const state = this.states.get(canvas); state?.panels.get(node)?.parentElement?.remove(); state?.panels.delete(node)
+      const state = this.states.get(canvas); if (state?.panel?.element === node) state.panel.show(undefined)
       state?.service.delete(node.id); this.schedule(canvas, node, false)
       this.removeProjection(state, node)
     }))
     this.plugin.registerEvent(events.on('advanced-canvas:edge-removed', (canvas, edge) => {
       const state = this.states.get(canvas); state?.labelDisposers.get(edge)?.(); state?.labelDisposers.delete(edge)
-      state?.panels.get(edge)?.parentElement?.remove(); state?.panels.delete(edge); state?.endpoints.delete(edge.id)
+      if (state?.panel?.element === edge) state.panel.show(undefined)
+      state?.endpoints.delete(edge.id)
       state?.service.delete(edge.id); this.schedule(canvas, edge, false)
       this.removeProjection(state, edge)
     }))
     this.plugin.registerEvent(events.on('advanced-canvas:canvas-view-unloaded:before', view => this.detach(view)))
     this.plugin.register(() => { for (const state of [...this.states.values()]) this.detach(state.canvas.view) })
     this.plugin.addCommand({ id: 'edit-element-properties', name: 'Edit selected node or edge frontmatter', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !canvas.readonly && canvas.selection.size === 1, canvas => this.openSource(canvas)) })
+    this.plugin.addCommand({ id: 'focus-element-properties', name: 'Focus properties of selected node or edge', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => canvas.selection.size === 1, canvas => { this.showPanel(canvas); this.states.get(canvas)?.panel?.expandAndFocus() }) })
     this.plugin.addCommand({ id: 'create-property-view', name: 'Create property view', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !canvas.readonly, canvas => this.viewEditor(canvas)) })
     this.plugin.addCommand({ id: 'show-all-properties', name: 'Show complete canvas', checkCallback: CanvasHelper.canvasCommand(this.plugin, () => true, canvas => this.setView(canvas)) })
     this.plugin.addCommand({ id: 'edit-property-view', name: 'Edit current property view', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !!this.states.get(canvas)?.active && !canvas.readonly, canvas => {
@@ -209,6 +225,8 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
         const split = splitEditingSource(bodyOf(data)); const parsed = parseProperties(split.yaml)
         if (parsed.errors.length) throw Error(parsed.errors[0].message)
         if (data.propertyGraph !== undefined) throw Error('This node already has a property record; merge it explicitly in the source editor')
+        const issues = schemaIssues(canvas, data, parsed.values!)
+        if (issues.length) throw Error('Not adopted; schema: ' + issues.join('; '))
         canvasTransaction(canvas, () => node.setData({ ...data, propertyGraph: { version: 1, yaml: split.yaml }, text: split.body })); this.schedule(canvas)
       } catch (error) { new Notice(String(error instanceof Error ? error.message : error)) }
     }) })
@@ -283,7 +301,7 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
   private attach(canvas: Canvas): void {
     if (this.unloading || !canvas || this.states.has(canvas)) return
     const native = canvas as NativeVisibilityCanvas
-    const state: State = { canvas, service: new PropertyService(), visible: { nodes: new Set(), edges: new Set() }, panels: new Map(), labels: new WeakSet(), labelDisposers: new Map(), endpoints: new Map(), portalElements: new Map(), reload: true, dirtyNodes: new Set(), dirtyEdges: new Set(), file: canvas.view.file?.path ?? '', dispose: () => {} }
+    const state: State = { canvas, service: new PropertyService(), visible: { nodes: new Set(), edges: new Set() }, labels: new WeakSet(), labelDisposers: new Map(), endpoints: new Map(), portalElements: new Map(), reload: true, dirtyNodes: new Set(), dirtyEdges: new Set(), file: canvas.view.file?.path ?? '', dispose: () => {} }
     this.states.set(canvas, state)
     const visible = (element: CanvasElement) => this.visible(state, element)
     const uninstall = around(native, {
@@ -306,8 +324,14 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
         next.call(canvas, element)
       }
     })
-    state.dispose = Patcher.registerUninstaller(this.plugin, uninstall)
-    this.refresh(state); this.controls(canvas)
+    state.panel = this.createPanel(state)
+    // Claude (LLM agent): after native placement, move the toolbar beside the panel only when they overlap.
+    const menu = canvas.menu, panel = state.panel
+    const uninstallMenu = menu ? around(menu as typeof menu & { render(...args: unknown[]): void }, {
+      render: (next: (...args: unknown[]) => void) => function (this: unknown, ...args: unknown[]) { const result = next.apply(this, args) as unknown; panel.avoidMenu(); return result }
+    }) : () => {}
+    state.dispose = Patcher.registerUninstaller(this.plugin, () => { uninstall(); uninstallMenu() })
+    this.refresh(state); this.controls(canvas); this.showPanel(canvas)
     for (const edge of canvas.edges.values()) this.hookLabel(canvas, edge)
   }
   private schedule(canvas: Canvas, element?: Element, reload = !element): void {
@@ -391,84 +415,86 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
     const elements = edge ? [element.lineGroupEl, element.lineEndGroupEl, element.labelElement?.wrapperEl] : [element.nodeEl]
     for (const target of elements) target?.classList.toggle('mkls-view-hidden', hidden)
   }
-  private editing(canvas: Canvas, element: Element, editing: boolean): void {
-    const state = this.states.get(canvas)
-    if (!state) return
-    if (!editing) {
-      const panel = state.panels.get(element)
-      // Moving focus from the native body editor into YAML can blur the body.
-      // Wait until focus settles before removing the still-active property editor.
-      if (panel) queueMicrotask(() => {
-        if (state.panels.get(element) !== panel || panel.ownerDocument.activeElement === panel) return
-        this.commitPanel(state, element, panel); panel.parentElement?.remove(); state.panels.delete(element)
-      })
-      this.applyElement(state, element); return
-    }
-    if (state.panels.has(element)) return
-    const container = 'from' in element ? element.labelElement?.wrapperEl : element.nodeEl
-    if (!container) return
-    const header = container.createDiv({ cls: 'mkls-frontmatter-panel' })
-    header.createDiv({ text: '---', cls: 'mkls-frontmatter-delimiter' })
-    const panel = header.createEl('textarea', { cls: 'mkls-frontmatter-text', attr: { 'aria-label': 'Element frontmatter', spellcheck: 'false' } })
-    const data = element.getData(); panel.value = yamlOf(data)
-    panel.readOnly = canvas.readonly || PortalsCanvasExtension.isPortalElement(element.id) || !writableRecord(data)
-    panel.dataset.sourceRevision = sourceRevision(asElement(data)); panel.dataset.sourceFile = state.file
-    header.createDiv({ text: '---', cls: 'mkls-frontmatter-delimiter' })
-    header.addEventListener('pointerdown', event => event.stopPropagation())
-    header.addEventListener('click', event => event.stopPropagation())
-    header.addEventListener('dblclick', event => event.stopPropagation())
-    header.addEventListener('keydown', event => event.stopPropagation())
-    panel.onblur = () => {
-      this.commitPanel(state, element, panel)
-      const nativeEditing = 'from' in element ? element.labelElement?.isEditing : element.isEditing
-      if (!nativeEditing && panel.dataset.returnToBody !== 'true') {
-        panel.parentElement?.remove(); state.panels.delete(element)
-        if ('from' in element && !element.getData().label) (element.labelElement as typeof element.labelElement & { destroy(): void })?.destroy()
-      }
-    }
-    state.panels.set(element, panel)
+  // Claude (LLM agent): property panel host. Every panel write is checked here against the
+  // element revision, schema revision, YAML syntax and schema before touching the canvas.
+  private createPanel(state: State): PropertyPanel {
+    const canvas = state.canvas
+    const current = (element: Element) => (isEdge(element.getData()) ? canvas.edges.get(element.id) : canvas.nodes.get(element.id)) === element
+    const refuse = (snapshot: PanelSnapshot, yaml: string, message: string): CommitResult => { this.retain(snapshot.file, snapshot.element, yaml, snapshot.revision); return { status: 'refused', message } }
+    return new PropertyPanel({
+      app: this.plugin.app, canvas,
+      file: () => canvas.view.file?.path ?? '',
+      committedYaml: element => { const yaml = element.getData().propertyGraph?.yaml; return typeof yaml === 'string' ? yaml : '' },
+      draft: element => { const draft = element.getData().propertyGraph?.draft; return typeof draft === 'string' ? draft : undefined },
+      revision: element => sourceRevision(asElement(element.getData())),
+      schemaRevision: () => schemaRevision(canvas),
+      schemaConfig: () => canvas.metadata?.propertyGraph,
+      readOnlyReason: element => this.readOnlyReason(canvas, element),
+      commit: (snapshot, yaml) => {
+        const element = snapshot.element
+        if (canvas.view.file?.path !== snapshot.file || !current(element)) return refuse(snapshot, yaml, 'This element is no longer on this canvas. Your input is kept in recovery storage.')
+        const reason = this.readOnlyReason(canvas, element)
+        if (reason) return refuse(snapshot, yaml, reason)
+        if (sourceRevision(asElement(element.getData())) !== snapshot.revision || schemaRevision(canvas) !== snapshot.schemaRevision) return refuse(snapshot, yaml, 'This element or the schema changed. Your input is kept in recovery storage; reload and recover it in the source editor.')
+        const data = element.getData(), parsed = parseProperties(yaml)
+        const issues = parsed.values ? schemaIssues(canvas, data, parsed.values) : parsed.errors.map(error => `Line ${error.line}:${error.column} ${error.message}`)
+        const previous = typeof data.propertyGraph?.yaml === 'string' ? data.propertyGraph.yaml : ''
+        if (!issues.length && yaml === previous && data.propertyGraph?.draft === undefined) return { status: 'saved' }
+        if (issues.length && yaml === data.propertyGraph?.draft) return { status: 'draft', issues }
+        const propertyGraph = { ...data.propertyGraph, version: 1 as const, yaml: issues.length ? previous : yaml }
+        if (issues.length) propertyGraph.draft = yaml
+        else { delete propertyGraph.draft; void this.draftStore.consume(state.file, element.id) }
+        canvasTransaction(canvas, () => element.setData({ ...data, propertyGraph } as never))
+        this.schedule(canvas, element)
+        return issues.length ? { status: 'draft', issues } : { status: 'saved' }
+      },
+      discardDraft: snapshot => {
+        const element = snapshot.element
+        if (!current(element) || sourceRevision(asElement(element.getData())) !== snapshot.revision) return { status: 'refused', message: 'This element changed; reload before discarding its draft.' }
+        const reason = this.readOnlyReason(canvas, element)
+        if (reason) return { status: 'refused', message: reason }
+        const data = element.getData(), propertyGraph = { ...data.propertyGraph!, version: 1 as const }
+        delete propertyGraph.draft
+        canvasTransaction(canvas, () => element.setData({ ...data, propertyGraph } as never))
+        this.schedule(canvas, element)
+        return { status: 'saved' }
+      },
+      retain: (snapshot, yaml) => this.retain(snapshot.file, snapshot.element, yaml, snapshot.revision),
+      openSource: element => { if (canvas.selection.size === 1 && canvas.selection.has(element)) void this.openSource(canvas) },
+    })
   }
-  private commitPanel(state: State, element: Element, panel: HTMLTextAreaElement): void {
-    const current = 'from' in element ? state.canvas.edges.get(element.id) : state.canvas.nodes.get(element.id)
-    if (state.canvas.view.file.path !== panel.dataset.sourceFile || current !== element) { this.retainPanel(element, panel); return }
-    const data = element.getData(); const previous = yamlOf(data)
-    if (panel.value === previous) return
-    if (state.canvas.readonly || PortalsCanvasExtension.isPortalElement(element.id)) { this.retainPanel(element, panel); return }
-    if (!writableRecord(data)) { this.retainPanel(element, panel); new Notice('Unsupported property record; draft retained in recovery storage'); return }
-    const parsed = parseProperties(panel.value)
-    const propertyGraph = { ...data.propertyGraph, version: 1 as const, yaml: parsed.errors.length ? data.propertyGraph?.yaml ?? '' : panel.value }
-    if (parsed.errors.length) propertyGraph.draft = panel.value
-    else { delete propertyGraph.draft; void this.draftStore.consume(state.file, element.id) }
-    canvasTransaction(state.canvas, () => element.setData({ ...data, propertyGraph } as never))
-    if (parsed.errors.length) new Notice(`Frontmatter draft retained: ${parsed.errors[0].line}:${parsed.errors[0].column} ${parsed.errors[0].message}`)
-    this.schedule(state.canvas, element)
+  private readOnlyReason(canvas: Canvas, element: Element): string | undefined {
+    if (PortalsCanvasExtension.isPortalElement(element.id)) return 'Projected from another canvas; edit its properties in the source canvas.'
+    if (canvas.readonly) return 'This canvas is read-only.'
+    if (!writableRecord(element.getData())) return 'Unsupported property record; the original data is preserved and cannot be edited here.'
+    if (schemaFor(canvas.metadata?.propertyGraph, isEdge(element.getData()) ? 'edges' : 'nodes').status === 'unsupported') return 'The canvas schema cannot be read, so properties are read-only until it is fixed.'
+    return undefined
+  }
+  private showPanel(canvas: Canvas): void {
+    const panel = this.states.get(canvas)?.panel
+    if (!panel) return
+    const selected = canvas.selection.size === 1 ? [...canvas.selection][0] as Element : undefined
+    const visible = selected && (isEdge(selected.getData()) ? canvas.edges.get(selected.id) : canvas.nodes.get(selected.id)) === selected
+    panel.show(visible ? selected : undefined)
+  }
+  private refreshPanel(canvas: Canvas, element?: Element): void {
+    const panel = this.states.get(canvas)?.panel
+    if (panel?.element && (!element || panel.element === element)) panel.refresh()
   }
   private hookLabel(canvas: Canvas, edge: CanvasEdge): void {
     const state = this.states.get(canvas); const label = edge.labelElement
     if (!state || !label || state.labels.has(label)) return
     state.labels.add(label)
-    let intoYaml = false
-    const focusOut = (event: FocusEvent) => { intoYaml = event.relatedTarget === state.panels.get(edge); queueMicrotask(() => { intoYaml = false }) }
-    label.textareaEl.addEventListener('focusout', focusOut, true)
-    const bodyPointer = (event: PointerEvent) => {
-      const panel = state.panels.get(edge)
-      if (panel && label.textareaEl.contains(event.target as Node)) { panel.dataset.returnToBody = 'true'; label.wrapperEl.win.setTimeout(() => { delete panel.dataset.returnToBody }, 0) }
-    }
-    label.wrapperEl.addEventListener('pointerdown', bodyPointer, true)
-    const dispose = around(label as typeof label & { focus(event?: Position): void; blur(): void; destroy(force?: boolean): void }, {
-      focus: (next: (event?: Position) => void) => (event?: Position) => { next.call(label, event); this.editing(canvas, edge, true) },
+    // Claude (LLM agent): edge properties live in the panel, so labels keep native lifecycle
+    // (an empty label is destroyed as usual); only label-change bookkeeping remains here.
+    const dispose = around(label as typeof label & { blur(): void; destroy(force?: boolean): void }, {
       blur: (next: () => void) => () => {
         const previous = label.isEditing ? label.initialTextState : edge.getData().label
-        this.editing(canvas, edge, false); next.call(label)
+        next.call(label)
         if (previous !== edge.getData().label) { canvasImports.changed(canvas); this.schedule(canvas, edge) }
         if (previous && !edge.getData().label && label.wrapperEl.isConnected) canvas.requestSave()
       },
       destroy: (next: (force?: boolean) => void) => (force?: boolean) => {
-        const panel = state.panels.get(edge)
-        // Native deletes an empty label on body blur. Keep its wrapper while
-        // the user moves into frontmatter, then release it on property blur.
-        if (!canvas.isClearing && canvas.edges.get(edge.id) === edge && panel && (intoYaml || panel.ownerDocument.activeElement === panel)) return
-        if (panel) { this.commitPanel(state, edge, panel); panel.parentElement?.remove(); state.panels.delete(edge) }
         next.call(label, force)
         const cleanup = state.labelDisposers.get(edge); state.labelDisposers.delete(edge); cleanup?.()
       }
@@ -476,26 +502,21 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
     const input = () => { canvasImports.changed(canvas); this.plugin.app.workspace.trigger('advanced-canvas:edge-data-changed', canvas, edge) }
     label.textareaEl.addEventListener('input', input)
     // Label lives with its edge; disposer registry is released on view unload.
-    state.labelDisposers.get(edge)?.(); state.labelDisposers.set(edge, () => { label.textareaEl.removeEventListener('input', input); label.textareaEl.removeEventListener('focusout', focusOut, true); label.wrapperEl.removeEventListener('pointerdown', bodyPointer, true); dispose() })
-    if (label.isEditing) this.editing(canvas, edge, true)
+    state.labelDisposers.get(edge)?.(); state.labelDisposers.set(edge, () => { label.textareaEl.removeEventListener('input', input); dispose() })
     this.applyElement(state, edge)
   }
-  private retainPanel(element: Element, panel: HTMLTextAreaElement): void {
+  private retain(file: string, element: Element, yaml: string, revision: string): void {
     if (!this.draftStore) return
-    if (panel.value === yamlOf(element.getData())) return
-    void this.draftStore.save({ file: panel.dataset.sourceFile ?? '', id: element.id, source: panel.value, kind: 'yaml', revision: panel.dataset.sourceRevision ?? '', savedAt: new Date().toISOString() }).catch(error => new Notice(`Draft retained in memory; recovery write failed: ${String(error)}`))
-    new Notice('Unsaved frontmatter retained in recovery storage; use the source editor to recover it.')
+    const data = element.getData()
+    if (yaml === (typeof data.propertyGraph?.draft === 'string' ? data.propertyGraph.draft : data.propertyGraph?.yaml ?? '')) return
+    void this.draftStore.save({ file, id: element.id, source: yaml, kind: 'yaml', revision, savedAt: new Date().toISOString() }).catch(error => new Notice(`Draft retained in memory; recovery write failed: ${String(error)}`))
+    new Notice('Unsaved properties retained in recovery storage; use the source editor to recover them.')
   }
-  private beforeReload(canvas: Canvas, data: CanvasData, clearCanvas?: boolean): void {
+  private beforeReload(canvas: Canvas, _data: CanvasData, clearCanvas?: boolean): void {
     const state = this.states.get(canvas); if (!state) return
     if (clearCanvas === false) return
-    const sameFile = state.file === canvas.view.file.path
-    const incoming = new Map([...data.nodes, ...data.edges].map(element => [element.id, element]))
-    for (const [element, panel] of state.panels) {
-      const replacement = incoming.get(element.id)
-      if (sameFile && replacement && sourceRevision(asElement(replacement)) === sourceRevision(asElement(element.getData()))) continue
-      this.retainPanel(element, panel); panel.parentElement?.remove(); state.panels.delete(element)
-    }
+    // Claude (LLM agent): elements are replaced; keep unsaved panel input in recovery storage.
+    state.panel?.retainPending(); state.panel?.show(undefined)
     for (const dispose of state.labelDisposers.values()) dispose()
     state.labelDisposers.clear(); state.labels = new WeakSet()
     state.portalElements.clear()
@@ -505,9 +526,7 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
   private detach(view: CanvasView): void {
     const state = this.states.get(view.canvas)
     if (!state) return
-    for (const [element, panel] of state.panels) this.commitPanel(state, element, panel)
-    for (const panel of state.panels.values()) panel.parentElement?.remove()
-    state.panels.clear()
+    state.panel?.destroy(); state.panel = undefined
     for (const dispose of state.labelDisposers.values()) dispose()
     state.labelDisposers.clear()
     if (state.frame !== undefined) state.canvas.canvasEl.win.cancelAnimationFrame(state.frame)
