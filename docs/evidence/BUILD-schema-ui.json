@@ -1,0 +1,28 @@
+{
+  "authorship": "Codex and Claude (LLM agents)",
+  "version": "7.1.0-mkls.2",
+  "sourceBranch": "mkls-property-graph",
+  "baselineImplementation": "d630418",
+  "bundleSha256": {
+    "main.js": "26e102c201811ec7dd9ee1f116985d399ee0c641069ad042382125dbce7aa9e5",
+    "styles.css": "fe6dd3e603fb854dccbb004f30da3293288b7f6fe6dfa932f5b01108002a4f11",
+    "manifest.json": "a7f64f2becf68b7647a90116fa63f4b4e6077860066d568c1eadf6df21d225da"
+  },
+  "installedQaBundleMatches": true,
+  "package": "mkls-advanced-canvas-7.1.0-mkls.2.zip",
+  "packageSha256": "c187731b902e82d356126c5a41e09d30f8a84feb098bfe9a568c6e2ba4061061",
+  "verification": {
+    "typescript": "passed",
+    "lint": "passed",
+    "productionBuild": "passed",
+    "nativeVisualInspection": "Single QA inspection; see PROPERTY_UX.md",
+    "newTestSuites": "not run",
+    "stressBenchmarks": "not run, as requested"
+  },
+  "observedTypography": {
+    "nodeBody": "16px",
+    "edgeLabel": "16px",
+    "fontFamily": "same Obsidian text-font setting"
+  },
+  "olderEvidence": "mkls.1 test and timing reports remain historical; they do not verify this follow-up."
+}

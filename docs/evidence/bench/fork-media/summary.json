@@ -1,0 +1,499 @@
+{
+  "mode": "fork",
+  "runId": "2026-10-12T22-25-41-808Z",
+  "vault": "<workspace>/planning/advanced-canvas/evidence/MKLS Canvas QA",
+  "limitations": [
+    "Text nodes only, except the opt-in \"media\" shape: local deterministic SVG files and Markdown notes embedding them (no raster images, PDFs, video, iframes or remote content).",
+    "A* routing only when --astar-percent > 0 and never in native mode; fork/upstream route dirty edges on render, so with A* edges load and drags include routing.",
+    "Load is file open inside a running Obsidian, not a cold application start.",
+    "JS heap is performance.memory (Chromium, non-standard) without forced GC; treat as indicative.",
+    "Frame timings depend on monitor refresh rate, window size and focus; idle frame baseline is reported for normalization."
+  ],
+  "results": [
+    {
+      "shape": "media",
+      "count": 100,
+      "expected": {
+        "nodes": 100,
+        "edges": 300
+      },
+      "fixture": "Bench/Bench-media-100-2026-10-12T22-25-41-808Z.canvas",
+      "fixtureSha256": "f98ca0a4b640b4a4f9c24a696ece1b6e7c7775c746802773a9d329a850f9defa",
+      "fixtureBytes": 108488,
+      "mediaSha256": {
+        "bench-shape-0.svg": "04fdbce1f2ba14ec",
+        "bench-note-0.md": "8e05c949e52c5f4e",
+        "bench-shape-1.svg": "ee26c6b1c7880454",
+        "bench-note-1.md": "009c286d6b3d9f28",
+        "bench-shape-2.svg": "b7f966320ba52d0b",
+        "bench-note-2.md": "f269d94f86dacf97",
+        "bench-shape-3.svg": "cb3a6c505fa9da33",
+        "bench-note-3.md": "055c9e60f6fe8a2d",
+        "bench-shape-4.svg": "6fa3315a968f42cd",
+        "bench-note-4.md": "203a35022d426fef",
+        "bench-shape-5.svg": "ceca090b0ed30828",
+        "bench-note-5.md": "508b5cc96672ddb1",
+        "bench-shape-6.svg": "51230b610d44fd5a",
+        "bench-note-6.md": "812087e7e906a754",
+        "bench-shape-7.svg": "17929898abd791f2",
+        "bench-note-7.md": "399d8a11957e159f"
+      },
+      "report": "<workspace>/planning/advanced-canvas/evidence/bench/fork-media/media-100.json",
+      "error": null,
+      "failures": [],
+      "warnings": [],
+      "phases": {
+        "focusAtStart": {
+          "sameDocumentAsGlobal": true,
+          "visibility": "visible",
+          "documentHasFocus": true,
+          "activeElement": "div.canvas-wrapper.node-insert-event",
+          "windowFocused": true,
+          "windowVisible": true,
+          "webContentsFocused": true
+        },
+        "idleFrames": {
+          "count": 60,
+          "p50": 3.599999999627471,
+          "p95": 3.7000000001862645,
+          "max": 3.7000000001862645,
+          "over16_7": 0,
+          "over33": 0
+        },
+        "load": {
+          "openFileMs": 44.69999998807907,
+          "importedMs": 44.69999998807907,
+          "mountedStableMs": 486,
+          "note": "mountedStableMs = import time + time until the last mounted-DOM change (15 unchanged frames confirm stability)",
+          "initialViewport": {
+            "zoom": -2.450093754057961,
+            "label": "initial viewport",
+            "ms": 441.30000001192093,
+            "timedOut": false,
+            "framesWaited": 25,
+            "nodes": 100,
+            "edges": 300,
+            "domElements": 2537,
+            "svgPaths": 784,
+            "heap": {
+              "usedJSHeapSize": 521351826,
+              "totalJSHeapSize": 623221894
+            }
+          },
+          "heapBeforeOpen": {
+            "usedJSHeapSize": 502411717,
+            "totalJSHeapSize": 623112821
+          }
+        },
+        "workingViewport": {
+          "label": "zoom 1.0 at centre",
+          "ms": 93.5,
+          "timedOut": false,
+          "framesWaited": 18,
+          "nodes": 12,
+          "edges": 69,
+          "domElements": 999,
+          "svgPaths": 238,
+          "heap": {
+            "usedJSHeapSize": 524887924,
+            "totalJSHeapSize": 623225416
+          }
+        },
+        "fitViewport": {
+          "zoom": -2.450093754057961,
+          "label": "zoom to fit",
+          "ms": 109.80000001192093,
+          "timedOut": false,
+          "framesWaited": 20,
+          "nodes": 100,
+          "edges": 300,
+          "domElements": 2537,
+          "svgPaths": 784,
+          "heap": {
+            "usedJSHeapSize": 508013943,
+            "totalJSHeapSize": 623048579
+          }
+        },
+        "pan": [
+          {
+            "label": "pan at zoom 1.0",
+            "zoom": 0,
+            "focused": true,
+            "focus": {
+              "before": {
+                "sameDocumentAsGlobal": true,
+                "visibility": "visible",
+                "documentHasFocus": true,
+                "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out.mod-animating",
+                "windowFocused": true,
+                "windowVisible": true,
+                "webContentsFocused": true
+              },
+              "after": {
+                "sameDocumentAsGlobal": true,
+                "visibility": "visible",
+                "documentHasFocus": true,
+                "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out.mod-animating",
+                "windowFocused": true,
+                "windowVisible": true,
+                "webContentsFocused": true
+              }
+            },
+            "idleCadenceBefore": {
+              "count": 30,
+              "p50": 3.599999999627471,
+              "p95": 10.699999999254942,
+              "max": 10.699999999254942,
+              "over16_7": 0,
+              "over33": 0
+            },
+            "focusAfter": {
+              "sameDocumentAsGlobal": true,
+              "visibility": "visible",
+              "documentHasFocus": true,
+              "activeElement": "div.canvas-wrapper.node-insert-event",
+              "windowFocused": true,
+              "windowVisible": true,
+              "webContentsFocused": true
+            },
+            "frames": {
+              "count": 180,
+              "p50": 7.1000000005587935,
+              "p95": 28.5,
+              "max": 67.90000000037253,
+              "over16_7": 14,
+              "over33": 4
+            },
+            "longTasks": {
+              "count": 0,
+              "totalMs": 0,
+              "max": 0
+            },
+            "mountedNodesSamples": [
+              10,
+              11,
+              16,
+              12,
+              16,
+              11
+            ],
+            "after": {
+              "nodes": 12,
+              "edges": 55,
+              "domElements": 915,
+              "svgPaths": 210
+            }
+          },
+          {
+            "label": "pan at fit zoom",
+            "zoom": -2.450093754057961,
+            "focused": true,
+            "focus": {
+              "before": {
+                "sameDocumentAsGlobal": true,
+                "visibility": "visible",
+                "documentHasFocus": true,
+                "activeElement": "div.canvas-wrapper.node-insert-event",
+                "windowFocused": true,
+                "windowVisible": true,
+                "webContentsFocused": true
+              },
+              "after": {
+                "sameDocumentAsGlobal": true,
+                "visibility": "visible",
+                "documentHasFocus": true,
+                "activeElement": "div.canvas-wrapper.node-insert-event",
+                "windowFocused": true,
+                "windowVisible": true,
+                "webContentsFocused": true
+              }
+            },
+            "idleCadenceBefore": {
+              "count": 30,
+              "p50": 3.599999999627471,
+              "p95": 3.6000000005587935,
+              "max": 3.7000000001862645,
+              "over16_7": 0,
+              "over33": 0
+            },
+            "focusAfter": {
+              "sameDocumentAsGlobal": true,
+              "visibility": "visible",
+              "documentHasFocus": true,
+              "activeElement": "div.canvas-wrapper.node-insert-event.mod-zoomed-out",
+              "windowFocused": true,
+              "windowVisible": true,
+              "webContentsFocused": true
+            },
+            "frames": {
+              "count": 180,
+              "p50": 7.2000000001862645,
+              "p95": 10.800000000745058,
+              "max": 17.90000000037253,
+              "over16_7": 1,
+              "over33": 0
+            },
+            "longTasks": {
+              "count": 0,
+              "totalMs": 0,
+              "max": 0
+            },
+            "mountedNodesSamples": [
+              70,
+              80,
+              90,
+              100,
+              90,
+              80
+            ],
+            "after": {
+              "nodes": 70,
+              "edges": 231,
+              "domElements": 1923,
+              "svgPaths": 601
+            }
+          }
+        ],
+        "panFiltered": {
+          "label": "pan at zoom 1.0 under bench-topic",
+          "zoom": 0,
+          "focused": true,
+          "focus": {
+            "before": {
+              "sameDocumentAsGlobal": true,
+              "visibility": "visible",
+              "documentHasFocus": true,
+              "activeElement": "div.canvas-wrapper.node-insert-event",
+              "windowFocused": true,
+              "windowVisible": true,
+              "webContentsFocused": true
+            },
+            "after": {
+              "sameDocumentAsGlobal": true,
+              "visibility": "visible",
+              "documentHasFocus": true,
+              "activeElement": "div.canvas-wrapper.node-insert-event",
+              "windowFocused": true,
+              "windowVisible": true,
+              "webContentsFocused": true
+            }
+          },
+          "idleCadenceBefore": {
+            "count": 30,
+            "p50": 3.599999999627471,
+            "p95": 3.6000000005587935,
+            "max": 3.7000000001862645,
+            "over16_7": 0,
+            "over33": 0
+          },
+          "focusAfter": {
+            "sameDocumentAsGlobal": true,
+            "visibility": "visible",
+            "documentHasFocus": true,
+            "activeElement": "div.canvas-wrapper.node-insert-event",
+            "windowFocused": true,
+            "windowVisible": true,
+            "webContentsFocused": true
+          },
+          "frames": {
+            "count": 180,
+            "p50": 3.599999999627471,
+            "p95": 7.2000000001862645,
+            "max": 14.399999999441206,
+            "over16_7": 0,
+            "over33": 0
+          },
+          "longTasks": {
+            "count": 0,
+            "totalMs": 0,
+            "max": 0
+          },
+          "mountedNodesSamples": [
+            6,
+            6,
+            7,
+            3,
+            10,
+            3
+          ],
+          "after": {
+            "nodes": 1,
+            "edges": 3,
+            "domElements": 128,
+            "svgPaths": 40
+          }
+        },
+        "filters": [
+          {
+            "label": "first filter (cold parse + index)",
+            "view": "bench-topic",
+            "syncMs": 5,
+            "twoFramesMs": 17.700000017881393,
+            "yamlParses": 100,
+            "visibleNodes": 5,
+            "visibleEdges": 1,
+            "mounted": {
+              "nodes": 1,
+              "edges": 0,
+              "domElements": 110,
+              "svgPaths": 34
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "back to All",
+            "view": "All",
+            "syncMs": 0.7999999821186066,
+            "twoFramesMs": 20.099999994039536,
+            "yamlParses": 0,
+            "visibleNodes": 100,
+            "visibleEdges": 300,
+            "mounted": {
+              "nodes": 12,
+              "edges": 69,
+              "domElements": 999,
+              "svgPaths": 238
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "warm same view",
+            "view": "bench-topic",
+            "syncMs": 0.800000011920929,
+            "twoFramesMs": 10.5,
+            "yamlParses": 0,
+            "visibleNodes": 5,
+            "visibleEdges": 1,
+            "mounted": {
+              "nodes": 1,
+              "edges": 0,
+              "domElements": 110,
+              "svgPaths": 34
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "warm other node view",
+            "view": "bench-nested",
+            "syncMs": 0.5,
+            "twoFramesMs": 12.799999982118607,
+            "yamlParses": 0,
+            "visibleNodes": 29,
+            "visibleEdges": 27,
+            "mounted": {
+              "nodes": 5,
+              "edges": 9,
+              "domElements": 330,
+              "svgPaths": 74
+            },
+            "heapDelta": 5104360
+          },
+          {
+            "label": "warm edge view",
+            "view": "bench-edges",
+            "syncMs": 5.699999988079071,
+            "twoFramesMs": 16,
+            "yamlParses": 300,
+            "visibleNodes": 40,
+            "visibleEdges": 25,
+            "mounted": {
+              "nodes": 3,
+              "edges": 6,
+              "domElements": 283,
+              "svgPaths": 68
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "final All",
+            "view": "All",
+            "syncMs": 0.5999999940395355,
+            "twoFramesMs": 19.299999982118607,
+            "yamlParses": 0,
+            "visibleNodes": 100,
+            "visibleEdges": 300,
+            "mounted": {
+              "nodes": 12,
+              "edges": 55,
+              "domElements": 915,
+              "svgPaths": 210
+            },
+            "heapDelta": 0
+          }
+        ],
+        "preservation": {
+          "before": {
+            "graph": "7d6a404a43aef7c08fe166ea030cbae05cd42a397973ab7d1bc657aac00172e7",
+            "disk": "885befd453206df88a44df8119d36188651e2d9f8607bfb3ebccdee2535779c7",
+            "history": 1,
+            "current": 0
+          },
+          "after": {
+            "graph": "7d6a404a43aef7c08fe166ea030cbae05cd42a397973ab7d1bc657aac00172e7",
+            "disk": "885befd453206df88a44df8119d36188651e2d9f8607bfb3ebccdee2535779c7",
+            "history": 1,
+            "current": 0
+          },
+          "graphUnchanged": true,
+          "diskUnchanged": true,
+          "historyUnchanged": true,
+          "diskMatchesFixture": false
+        },
+        "commit": {
+          "nodeId": "n38",
+          "generic": {
+            "ms": 0.9000000059604645,
+            "historyEntriesAdded": 1,
+            "lastSnapshotBytes": 71620,
+            "heapDelta": 0
+          },
+          "forkYamlPanel": {
+            "valid": true,
+            "pageFocus": {
+              "before": {
+                "sameDocumentAsGlobal": true,
+                "visibility": "visible",
+                "documentHasFocus": true,
+                "activeElement": "div.canvas-wrapper.node-insert-event",
+                "windowFocused": true,
+                "windowVisible": true,
+                "webContentsFocused": true
+              },
+              "after": {
+                "sameDocumentAsGlobal": true,
+                "visibility": "visible",
+                "documentHasFocus": true,
+                "activeElement": "div.canvas-wrapper.node-insert-event",
+                "windowFocused": true,
+                "windowVisible": true,
+                "webContentsFocused": true
+              }
+            },
+            "focus": {
+              "active": true,
+              "connected": true,
+              "activeElement": "textarea.mkls-frontmatter-text"
+            },
+            "blurCommitMs": 3.300000011920929,
+            "committed": true,
+            "historyByBlur": {
+              "lengthDelta": 1,
+              "currentDelta": 1
+            },
+            "historyAfterEditEnd": {
+              "lengthDelta": 1,
+              "currentDelta": 1,
+              "note": "includes any native body-editing history"
+            }
+          }
+        },
+        "afterClose": {
+          "heap": {
+            "usedJSHeapSize": 532896127,
+            "totalJSHeapSize": 623780159
+          }
+        }
+      }
+    }
+  ]
+}

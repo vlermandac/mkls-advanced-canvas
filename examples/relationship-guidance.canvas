@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "version": "1.0-1.0",
+    "frontmatter": {},
+    "propertyGraph": {
+      "version": 1,
+      "views": [
+        {
+          "id": "typed-nodes",
+          "name": "Typed nodes",
+          "mode": "nodes",
+          "nodes": {
+            "kind": "condition",
+            "scope": "properties",
+            "path": [
+              "kind"
+            ],
+            "operator": "exists"
+          }
+        }
+      ],
+      "schema": {
+        "version": 1,
+        "nodes": {
+          "allowAdditional": true,
+          "fields": [
+            {
+              "key": "kind",
+              "type": "text",
+              "required": true,
+              "options": [
+                "theorem",
+                "definition"
+              ],
+              "description": "What this node represents"
+            },
+            {
+              "key": "status",
+              "type": "text",
+              "default": "draft",
+              "options": [
+                "draft",
+                "accepted"
+              ]
+            },
+            {
+              "key": "reviewed",
+              "type": "boolean",
+              "default": false
+            }
+          ]
+        },
+        "edges": {
+          "allowAdditional": false,
+          "fields": [
+            {
+              "key": "relation",
+              "type": "text",
+              "required": true,
+              "options": [
+                "uses",
+                "supports"
+              ]
+            },
+            {
+              "key": "weight",
+              "type": "number",
+              "default": 1
+            }
+          ]
+        }
+      },
+      "relationships": {
+        "version": 1,
+        "nodeTypeKey": "kind",
+        "edgeTypeKey": "relation",
+        "rules": [
+          {
+            "id": "theorem-definition",
+            "name": "Theorem dependencies",
+            "from": [
+              "theorem"
+            ],
+            "to": [
+              "definition"
+            ],
+            "relations": [
+              "uses",
+              "supports"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "09ed368f422047ab",
+      "type": "text",
+      "text": "Theorem",
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 160,
+      "propertyGraph": {
+        "version": 1,
+        "yaml": "# Canvas instance properties\nkind: theorem\nstatus: accepted\n"
+      }
+    },
+    {
+      "id": "09ed368f422047ac",
+      "type": "text",
+      "text": "Definition",
+      "x": 500,
+      "y": 0,
+      "width": 300,
+      "height": 160,
+      "propertyGraph": {
+        "version": 1,
+        "yaml": "kind: definition\n"
+      }
+    }
+  ],
+  "edges": []
+}

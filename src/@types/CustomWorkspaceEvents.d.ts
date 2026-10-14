@@ -47,6 +47,9 @@ export interface CustomWorkspaceEvents {
   'advanced-canvas:node-changed': (canvas: Canvas, node: CanvasNode) => void
   /** Fired when any edge gets changed */
   'advanced-canvas:edge-changed': (canvas: Canvas, edge: CanvasEdge) => void
+  // Codex (LLM agent): distinguish model mutations from rendering.
+  'advanced-canvas:edge-data-changed': (canvas: Canvas, edge: CanvasEdge) => void
+  'advanced-canvas:element-properties-changed': (canvas: Canvas, element: CanvasNode | CanvasEdge) => void
   /** Fired when any node gets rendered */
   'advanced-canvas:node-rendered': (canvas: Canvas, node: CanvasNode) => void
   /** Fired when the text content of a node gets changed (While typing) */
@@ -57,6 +60,8 @@ export interface CustomWorkspaceEvents {
   'advanced-canvas:edge-connection-dragging:before': (canvas: Canvas, edge: CanvasEdge, event: PointerEvent, newEdge: boolean, side: 'from' | 'to', previousEnds?: { from: CanvasEdgeEnd, to: CanvasEdgeEnd }) => void
   /** Fired after an edge gets dragged */
   'advanced-canvas:edge-connection-dragging:after': (canvas: Canvas, edge: CanvasEdge, event: PointerEvent, newEdge: boolean, side: 'from' | 'to', previousEnds?: { from: CanvasEdgeEnd, to: CanvasEdgeEnd }) => void
+  // Codex (LLM agent): claim a new connection before native save/history.
+  'advanced-canvas:new-connection-drop:before': (canvas: Canvas, edge: CanvasEdge, event: PointerEvent, control: { handled: boolean }) => void
   /** Fired when a node gets deleted */
   'advanced-canvas:node-removed': (canvas: Canvas, node: CanvasNode) => void
   /** Fired when an edge gets deleted */
@@ -92,9 +97,9 @@ export interface CustomWorkspaceEvents {
   /** Fired when the canvas data gets requested */
   'advanced-canvas:data-requested': (canvas: Canvas, data: CanvasData) => void
   /** Fired before the canvas data gets set */
-  'advanced-canvas:data-loaded:before': (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => void) => void
+  'advanced-canvas:data-loaded:before': (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => boolean | void, clearCanvas?: boolean) => void
   /** Fired after the canvas data gets set */
-  'advanced-canvas:data-loaded:after': (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => void) => void
+  'advanced-canvas:data-loaded:after': (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => boolean | void, clearCanvas?: boolean) => void
   /** Fired before the canvas gets saved */
   'advanced-canvas:canvas-saved:before': (canvas: Canvas) => void
   /** Fired after the canvas gets saved */

@@ -1,9 +1,11 @@
 import { CanvasFileNodeData } from "src/@types/AdvancedJsonCanvas"
-import { BBox, Position } from "src/@types/Canvas"
+import { Position } from "src/@types/Canvas"
 import BBoxHelper from "src/utils/bbox-helper"
 import CanvasHelper from "src/utils/canvas-helper"
 import SvgPathHelper from "src/utils/svg-path-helper"
 import EdgePathfindingMethod, { EdgePath } from "./edge-pathfinding-method"
+// Codex (LLM agent): Claude's bounded spatial index preserves obstacle semantics.
+import SpatialObstacles from 'src/utils/spatial-obstacles'
 
 const MAX_MS_CALCULATION = 100
 const BASIC_DIRECTIONS = [
@@ -98,7 +100,10 @@ class MinHeap {
 }
 
 export default class EdgePathfindingAStar extends EdgePathfindingMethod {
+  // Codex (LLM agent): distinguish temporary budget exhaustion from no route.
+  timedOut = false
   getPath(): EdgePath | null {
+    this.timedOut = false
     const nodeBBoxes = [...this.canvas.nodes.values()]
       .filter(node => {
         const nodeData = node.getData()
@@ -117,7 +122,7 @@ export default class EdgePathfindingAStar extends EdgePathfindingMethod {
     const toPosWithMargin = BBoxHelper.moveInDirection(this.toPos, this.toSide, 10)
 
     const allowDiagonal = this.plugin.settings.getSetting('edgeStylePathfinderAllowDiagonal')
-    const pathArray = this.aStarAlgorithm(fromPosWithMargin, toPosWithMargin, nodeBBoxes, CanvasHelper.GRID_SIZE / 2, allowDiagonal)
+    const pathArray = this.aStarAlgorithm(fromPosWithMargin, toPosWithMargin, new SpatialObstacles(nodeBBoxes), CanvasHelper.GRID_SIZE / 2, allowDiagonal)
     if (!pathArray) return null // No path found - use default path
 
     // Make connection points to the node removing the margin
@@ -141,7 +146,7 @@ export default class EdgePathfindingAStar extends EdgePathfindingMethod {
     }
   }
 
-  private aStarAlgorithm(fromPos: Position, toPos: Position, obstacles: BBox[], gridResolution: number, allowDiagonal: boolean): Position[] | null {
+  private aStarAlgorithm(fromPos: Position, toPos: Position, obstacles: SpatialObstacles, gridResolution: number, allowDiagonal: boolean): Position[] | null {
     const start: Node = new Node(
       Math.floor(fromPos.x / gridResolution) * gridResolution,
       Math.floor(fromPos.y / gridResolution) * gridResolution
@@ -170,8 +175,7 @@ export default class EdgePathfindingAStar extends EdgePathfindingMethod {
 
     while (openSet.size > 0) {
       // Check if the calculation is taking too long
-      if (performance.now() - startTimestamp > MAX_MS_CALCULATION)
-        return null
+      if (performance.now() - startTimestamp > MAX_MS_CALCULATION) { this.timedOut = true; return null }
 
       const current = openSet.pop()!
       const currentKey = `${current.x},${current.y}`
@@ -227,12 +231,12 @@ export default class EdgePathfindingAStar extends EdgePathfindingMethod {
   }
 
   // Define a function to check if a position isn't inside any obstacle
-  private isTouchingObstacle(node: Position, obstacles: BBox[]): boolean {
-    return obstacles.some(obstacle => BBoxHelper.insideBBox(node, obstacle, true))
+  private isTouchingObstacle(node: Position, obstacles: SpatialObstacles): boolean {
+    return obstacles.contains(node, true)
   }
 
-  private isInsideObstacle(node: Position, obstacles: BBox[]): boolean {
-    return obstacles.some(obstacle => BBoxHelper.insideBBox(node, obstacle, false))
+  private isInsideObstacle(node: Position, obstacles: SpatialObstacles): boolean {
+    return obstacles.contains(node, false)
   }
 
   // Define a function to calculate movement cost based on direction
@@ -240,7 +244,7 @@ export default class EdgePathfindingAStar extends EdgePathfindingMethod {
     return direction.dx !== 0 && direction.dy !== 0 ? DIAGONAL_COST : 1
   }
 
-  private getPossibleNeighbors(node: Node, obstacles: BBox[], gridResolution: number, allowDiagonal: boolean): Node[] {
+  private getPossibleNeighbors(node: Node, obstacles: SpatialObstacles, gridResolution: number, allowDiagonal: boolean): Node[] {
     const neighbors: Node[] = []
 
     const availableDirections = allowDiagonal ? [...BASIC_DIRECTIONS, ...DIAGONAL_DIRECTIONS] : BASIC_DIRECTIONS

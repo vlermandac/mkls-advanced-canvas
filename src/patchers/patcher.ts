@@ -1,3 +1,4 @@
+// MKLS changes authored by Codex (LLM agent): bounded patch disposal registry.
 import { around } from "monkey-around"
 import AdvancedCanvasPlugin from "src/main"
 import { Plugin } from "obsidian"
@@ -36,6 +37,19 @@ type FunctionPatchObject<T> = {
 }
 
 export default abstract class Patcher {
+  private static disposal = new WeakMap<Plugin, Set<() => void>>()
+  static registerUninstaller(plugin: Plugin, uninstall: () => void): () => void {
+    let registry = this.disposal.get(plugin)
+    if (!registry) {
+      registry = new Set<() => void>(); this.disposal.set(plugin, registry)
+      const owned = registry
+      plugin.register(() => { for (const dispose of [...owned]) dispose(); owned.clear() })
+    }
+    const owned = registry
+    const dispose = () => { if (!owned.delete(dispose)) return; uninstall() }
+    owned.add(dispose)
+    return dispose
+  }
   plugin: AdvancedCanvasPlugin
 
   constructor(plugin: AdvancedCanvasPlugin) {
@@ -108,12 +122,11 @@ export default abstract class Patcher {
       }
     }
 
-    const uninstaller = around(
+    const uninstaller = this.registerUninstaller(plugin, around(
       target as Record<string, (...args: unknown[]) => unknown>,
       patches as Parameters<typeof around>[1]
-    )
+    ))
     if (uninstallers) uninstallers.push(uninstaller)
-    plugin.register(uninstaller)
 
     return object
   }

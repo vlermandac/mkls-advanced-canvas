@@ -14,8 +14,11 @@ export default class PortalsCanvasExtension extends CanvasExtension {
 
   init() {
     this.plugin.registerEvent(this.plugin.app.vault.on('modify', (file: TFile) => {
+      // Claude (LLM agent): portals only show canvas files; ignore all other modifications.
+      if (file.extension !== 'canvas') return
+
       for (const canvas of this.plugin.getCanvases())
-        this.onFileModified(canvas, file)
+        void this.onFileModified(canvas, file)
     }))
 
     this.plugin.registerEvent(this.plugin.app.workspace.on(
@@ -70,11 +73,12 @@ export default class PortalsCanvasExtension extends CanvasExtension {
 
     this.plugin.registerEvent(this.plugin.app.workspace.on(
       'advanced-canvas:data-loaded:before',
-      (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => void) => {
+      (canvas: Canvas, data: CanvasData, setData: (data: CanvasData) => boolean | void) => {
         this.onSetData(canvas, data).then((newData: CanvasData) => {
           // Skip if the data didn't change
           if (newData.nodes.length === data.nodes.length && newData.edges.length === data.edges.length) return
-          setData(newData)
+          // Codex (LLM agent): rejected stale refreshes must not poison the cache.
+          if (setData(newData) === false) this.loadedPortalContent.delete(canvas)
         }).catch((error) => {
           console.error('Error loading portal data:', error)
           new Notice('An error occurred while loading portal data. Please check console for details.')
@@ -83,12 +87,31 @@ export default class PortalsCanvasExtension extends CanvasExtension {
     ))
   }
 
-  private onFileModified(canvas: Canvas, file: TFile) {
-    const isAffected = Object.values(canvas.nodes).filter((nodeData: CanvasNode) =>
-      nodeData.getData().type === 'file' &&
-      nodeData.currentPortalFile === file.path
-    ).length > 0
+  // Claude (LLM agent): content each canvas last loaded per portal file. A modification with the
+  // same content (e.g. a save that did not change the portal file) does not reload the canvas,
+  // which also prevents reload ping-pong between canvases that show each other.
+  private loadedPortalContent = new WeakMap<Canvas, Map<string, string>>()
+
+  private async onFileModified(canvas: Canvas, file: TFile) {
+    // Claude (LLM agent): canvas.nodes is a Map; Object.values(Map) was always empty, so portals
+    // never refreshed. Open (also nested) portals are identified by their data, because
+    // currentPortalFile is only set after toggling a portal in this session.
+    if (file.path === canvas.view?.file?.path) return // Own saves; self-portals are never loaded
+
+    let isAffected = false
+    for (const node of canvas.nodes.values()) {
+      const nodeData = node.getData() as CanvasFileNodeData
+      if (nodeData.type !== 'file') continue
+      if ((nodeData.portal === true && nodeData.file === file.path) || node.currentPortalFile === file.path) {
+        isAffected = true
+        break
+      }
+    }
     if (!isAffected) return
+
+    const loadedContent = this.loadedPortalContent.get(canvas)?.get(file.path)
+    if (loadedContent !== undefined && loadedContent === await this.plugin.app.vault.cachedRead(file)) return
+    if (!this.plugin.getCanvases().includes(canvas)) return // Closed while reading
 
     // Update whole canvas data
     canvas.setData(canvas.getData())
@@ -338,6 +361,9 @@ export default class PortalsCanvasExtension extends CanvasExtension {
 
     // Read portal file data
     const portalFileDataString = await this.plugin.app.vault.cachedRead(portalFile)
+    let loadedContent = this.loadedPortalContent.get(canvas)
+    if (!loadedContent) this.loadedPortalContent.set(canvas, loadedContent = new Map<string, string>())
+    loadedContent.set(portalFile.path, portalFileDataString)
     if (portalFileDataString === '') return addedData
 
     const portalFileData = JSON.parse(portalFileDataString) as CanvasData

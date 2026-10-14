@@ -32,7 +32,8 @@ export default defineConfig([
       "obsidianmd/ui/sentence-case": [
         "error",
         {
-          acronyms: ["SVG", "F3"],
+          // Codex (LLM agent): preserve standard format names in schema/property UI.
+          acronyms: ["SVG", "F3", "JSON", "YAML", "YYYY-MM-DD"],
           brands: [
             "Obsidian",
             "Advanced Canvas",

@@ -1,3 +1,4 @@
+# Fork guard authored by Codex (LLM agent). Upstream beta policy applies only upstream.
 name: PR check
 
 on:
@@ -6,6 +7,7 @@ on:
 
 jobs:
   check-base:
+    if: github.repository == 'Developer-Mike/obsidian-advanced-canvas'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

@@ -1,3 +1,5 @@
+// MKLS property additions authored by Codex (LLM agent).
+import type { ElementProperties, GraphConfiguration } from 'src/property-graph/types'
 export type CanvasColor = `${number}` | `#${string}`
 
 export interface CanvasData {
@@ -7,6 +9,7 @@ export interface CanvasData {
 }
 
 export interface CanvasMetadata {
+  propertyGraph?: GraphConfiguration
   version: '1.0-1.0'
   frontmatter: { [key: string]: unknown }
   startNode?: string
@@ -14,6 +17,7 @@ export interface CanvasMetadata {
 
 export type CanvasNodeType = 'text' | 'group' | 'file' | 'link'
 export interface CanvasNodeData {
+  propertyGraph?: ElementProperties
   id: string
   type: CanvasNodeType
 
@@ -65,6 +69,7 @@ export interface CanvasGroupNodeData extends CanvasNodeData {
 type Side = 'top' | 'right' | 'bottom' | 'left'
 type EndType = 'none' | 'arrow'
 export interface CanvasEdgeData {
+  propertyGraph?: ElementProperties
   id: string
 
   fromNode: string

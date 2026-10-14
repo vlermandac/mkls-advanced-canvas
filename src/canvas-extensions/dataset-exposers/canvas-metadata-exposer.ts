@@ -16,12 +16,24 @@ export default class CanvasMetadataExposerExtension extends CanvasExtension {
     ))
   }
 
+  // Claude (LLM agent): track the exposed start node per canvas so metadata changes update at
+  // most the previous and the new start node instead of every node.
+  private exposedStartNodeIds = new WeakMap<Canvas, string | undefined>()
+
   private updateExposedSettings(canvas: Canvas) {
     // Expose start node
-    const startNodeId = canvas.metadata['startNode']
-    for (const [nodeId, node] of canvas.nodes) {
-      if (nodeId === startNodeId) node.nodeEl.dataset.isStartNode = 'true'
-      else delete node.nodeEl.dataset.isStartNode
+    const startNodeId = canvas.metadata?.['startNode']
+    const previousStartNodeId = this.exposedStartNodeIds.get(canvas)
+
+    if (previousStartNodeId !== undefined && previousStartNodeId !== startNodeId) {
+      const previousNode = canvas.nodes.get(previousStartNodeId)
+      if (previousNode) delete previousNode.nodeEl.dataset.isStartNode
     }
+
+    // Re-applied even when unchanged: the node element may have been re-created by a reload
+    const startNode = startNodeId !== undefined ? canvas.nodes.get(startNodeId) : undefined
+    if (startNode) startNode.nodeEl.dataset.isStartNode = 'true'
+
+    this.exposedStartNodeIds.set(canvas, startNodeId)
   }
 }

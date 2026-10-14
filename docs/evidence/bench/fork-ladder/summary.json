@@ -1,0 +1,1322 @@
+{
+  "mode": "fork",
+  "runId": "2026-10-12T21-45-31-448Z",
+  "vault": "<workspace>/planning/advanced-canvas/evidence/MKLS Canvas QA",
+  "limitations": [
+    "Text nodes only, except the opt-in \"media\" shape: local deterministic SVG files and Markdown notes embedding them (no raster images, PDFs, video, iframes or remote content).",
+    "A* routing only when --astar-percent > 0 and never in native mode; fork/upstream route dirty edges on render, so with A* edges load and drags include routing.",
+    "Load is file open inside a running Obsidian, not a cold application start.",
+    "JS heap is performance.memory (Chromium, non-standard) without forced GC; treat as indicative.",
+    "Frame timings depend on monitor refresh rate, window size and focus; idle frame baseline is reported for normalization."
+  ],
+  "results": [
+    {
+      "shape": "sparse",
+      "count": 100,
+      "expected": {
+        "nodes": 100,
+        "edges": 300
+      },
+      "fixture": "Bench/Bench-sparse-100-2026-10-12T21-45-31-448Z.canvas",
+      "fixtureSha256": "58737218f30d91ab9adaa97cfa2b4c59d6e33ad02e9c7c9532a39393521757eb",
+      "fixtureBytes": 109910,
+      "report": "<workspace>/planning/advanced-canvas/evidence/bench/fork-ladder/sparse-100.json",
+      "error": null,
+      "failures": [],
+      "warnings": [],
+      "phases": {
+        "idleFrames": {
+          "count": 60,
+          "p50": 3.6000000000931323,
+          "p95": 3.6000000000931323,
+          "max": 3.6999999997206032,
+          "over16_7": 0,
+          "over33": 0
+        },
+        "load": {
+          "openFileMs": 70.89999997615814,
+          "importedMs": 70.89999997615814,
+          "mountedStableMs": 399.2999999821186,
+          "note": "mountedStableMs = import time + time until the last mounted-DOM change (15 unchanged frames confirm stability)",
+          "initialViewport": {
+            "zoom": -2.450093754057961,
+            "label": "initial viewport",
+            "ms": 328.40000000596046,
+            "timedOut": false,
+            "framesWaited": 25,
+            "nodes": 100,
+            "edges": 300,
+            "domElements": 2687,
+            "svgPaths": 934,
+            "heap": {
+              "usedJSHeapSize": 55612448,
+              "totalJSHeapSize": 71188924
+            }
+          },
+          "heapBeforeOpen": {
+            "usedJSHeapSize": 51989774,
+            "totalJSHeapSize": 57868522
+          }
+        },
+        "workingViewport": {
+          "label": "zoom 1.0 at centre",
+          "ms": 8.199999988079071,
+          "timedOut": false,
+          "framesWaited": 16,
+          "nodes": 12,
+          "edges": 65,
+          "domElements": 753,
+          "svgPaths": 164,
+          "heap": {
+            "usedJSHeapSize": 59019311,
+            "totalJSHeapSize": 71189551
+          }
+        },
+        "fitViewport": {
+          "zoom": -2.450093754057961,
+          "label": "zoom to fit",
+          "ms": 106.40000000596046,
+          "timedOut": false,
+          "framesWaited": 21,
+          "nodes": 100,
+          "edges": 300,
+          "domElements": 2687,
+          "svgPaths": 934,
+          "heap": {
+            "usedJSHeapSize": 57854063,
+            "totalJSHeapSize": 71060239
+          }
+        },
+        "pan": [
+          {
+            "label": "pan at zoom 1.0",
+            "zoom": 0,
+            "focused": true,
+            "frames": {
+              "count": 180,
+              "p50": 7.199999999720603,
+              "p95": 14.300000000279397,
+              "max": 32.09999999962747,
+              "over16_7": 7,
+              "over33": 0
+            },
+            "longTasks": {
+              "count": 0,
+              "totalMs": 0,
+              "max": 0
+            },
+            "mountedNodesSamples": [
+              10,
+              12,
+              18,
+              12,
+              18,
+              12
+            ],
+            "after": {
+              "nodes": 12,
+              "edges": 45,
+              "domElements": 633,
+              "svgPaths": 124
+            }
+          },
+          {
+            "label": "pan at fit zoom",
+            "zoom": -2.450093754057961,
+            "focused": true,
+            "frames": {
+              "count": 180,
+              "p50": 10.699999999720603,
+              "p95": 14.299999999813735,
+              "max": 17.899999999906868,
+              "over16_7": 2,
+              "over33": 0
+            },
+            "longTasks": {
+              "count": 0,
+              "totalMs": 0,
+              "max": 0
+            },
+            "mountedNodesSamples": [
+              70,
+              80,
+              90,
+              100,
+              90,
+              80
+            ],
+            "after": {
+              "nodes": 70,
+              "edges": 225,
+              "domElements": 1997,
+              "svgPaths": 694
+            }
+          }
+        ],
+        "panFiltered": {
+          "label": "pan at zoom 1.0 under bench-topic",
+          "zoom": 0,
+          "focused": true,
+          "frames": {
+            "count": 180,
+            "p50": 3.6000000000931323,
+            "p95": 7.100000000093132,
+            "max": 10.800000000279397,
+            "over16_7": 0,
+            "over33": 0
+          },
+          "longTasks": {
+            "count": 0,
+            "totalMs": 0,
+            "max": 0
+          },
+          "mountedNodesSamples": [
+            7,
+            3,
+            5,
+            6,
+            8,
+            7
+          ],
+          "after": {
+            "nodes": 7,
+            "edges": 9,
+            "domElements": 302,
+            "svgPaths": 52
+          }
+        },
+        "filters": [
+          {
+            "label": "first filter (cold parse + index)",
+            "view": "bench-topic",
+            "syncMs": 38.29999998211861,
+            "twoFramesMs": 54.19999998807907,
+            "yamlParses": 100,
+            "visibleNodes": 1,
+            "visibleEdges": 0,
+            "mounted": {
+              "nodes": 0,
+              "edges": 0,
+              "domElements": 87,
+              "svgPaths": 34
+            },
+            "heapDelta": -1893988
+          },
+          {
+            "label": "back to All",
+            "view": "All",
+            "syncMs": 0.800000011920929,
+            "twoFramesMs": 13.700000017881393,
+            "yamlParses": 0,
+            "visibleNodes": 100,
+            "visibleEdges": 300,
+            "mounted": {
+              "nodes": 12,
+              "edges": 65,
+              "domElements": 753,
+              "svgPaths": 164
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "warm same view",
+            "view": "bench-topic",
+            "syncMs": 1.5999999940395355,
+            "twoFramesMs": 11.300000011920929,
+            "yamlParses": 0,
+            "visibleNodes": 1,
+            "visibleEdges": 0,
+            "mounted": {
+              "nodes": 0,
+              "edges": 0,
+              "domElements": 87,
+              "svgPaths": 34
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "warm other node view",
+            "view": "bench-nested",
+            "syncMs": 1.5,
+            "twoFramesMs": 8.900000005960464,
+            "yamlParses": 0,
+            "visibleNodes": 26,
+            "visibleEdges": 23,
+            "mounted": {
+              "nodes": 3,
+              "edges": 5,
+              "domElements": 186,
+              "svgPaths": 44
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "warm edge view",
+            "view": "bench-edges",
+            "syncMs": 12.200000017881393,
+            "twoFramesMs": 20.80000001192093,
+            "yamlParses": 300,
+            "visibleNodes": 44,
+            "visibleEdges": 33,
+            "mounted": {
+              "nodes": 6,
+              "edges": 7,
+              "domElements": 267,
+              "svgPaths": 48
+            },
+            "heapDelta": -547207
+          },
+          {
+            "label": "final All",
+            "view": "All",
+            "syncMs": 0.699999988079071,
+            "twoFramesMs": 14.400000005960464,
+            "yamlParses": 0,
+            "visibleNodes": 100,
+            "visibleEdges": 300,
+            "mounted": {
+              "nodes": 12,
+              "edges": 45,
+              "domElements": 633,
+              "svgPaths": 124
+            },
+            "heapDelta": 0
+          }
+        ],
+        "preservation": {
+          "before": {
+            "graph": "165de6005e133eaf6a4a0d08ee9b9667732266fd488e10376300671d812180bb",
+            "disk": "58737218f30d91ab9adaa97cfa2b4c59d6e33ad02e9c7c9532a39393521757eb",
+            "history": 1,
+            "current": 0
+          },
+          "after": {
+            "graph": "165de6005e133eaf6a4a0d08ee9b9667732266fd488e10376300671d812180bb",
+            "disk": "58737218f30d91ab9adaa97cfa2b4c59d6e33ad02e9c7c9532a39393521757eb",
+            "history": 1,
+            "current": 0
+          },
+          "graphUnchanged": true,
+          "diskUnchanged": true,
+          "historyUnchanged": true,
+          "diskMatchesFixture": true
+        },
+        "commit": {
+          "nodeId": "n38",
+          "generic": {
+            "ms": 1.300000011920929,
+            "historyEntriesAdded": 1,
+            "lastSnapshotBytes": 73042,
+            "heapDelta": 0
+          },
+          "forkYamlPanel": {
+            "valid": true,
+            "focus": {
+              "active": true,
+              "connected": true,
+              "activeElement": "textarea.mkls-frontmatter-text"
+            },
+            "blurCommitMs": 4.800000011920929,
+            "committed": true,
+            "historyByBlur": {
+              "lengthDelta": 1,
+              "currentDelta": 1
+            },
+            "historyAfterEditEnd": {
+              "lengthDelta": 1,
+              "currentDelta": 1,
+              "note": "includes any native body-editing history"
+            }
+          }
+        },
+        "afterClose": {
+          "heap": {
+            "usedJSHeapSize": 65722197,
+            "totalJSHeapSize": 78383885
+          }
+        }
+      }
+    },
+    {
+      "shape": "sparse",
+      "count": 1000,
+      "expected": {
+        "nodes": 1000,
+        "edges": 3000
+      },
+      "fixture": "Bench/Bench-sparse-1000-2026-10-12T21-45-31-448Z.canvas",
+      "fixtureSha256": "1b43fa4484a486c19abf70d796e32f91bbefca363b8c212178eb161d2f3176d3",
+      "fixtureBytes": 1091767,
+      "report": "<workspace>/planning/advanced-canvas/evidence/bench/fork-ladder/sparse-1000.json",
+      "error": null,
+      "failures": [],
+      "warnings": [],
+      "phases": {
+        "idleFrames": {
+          "count": 60,
+          "p50": 3.6000000000931323,
+          "p95": 3.6000000000931323,
+          "max": 3.7000000001862645,
+          "over16_7": 0,
+          "over33": 0
+        },
+        "load": {
+          "openFileMs": 225.59999999403954,
+          "importedMs": 225.59999999403954,
+          "mountedStableMs": 5471.9000000059605,
+          "note": "mountedStableMs = import time + time until the last mounted-DOM change (15 unchanged frames confirm stability)",
+          "initialViewport": {
+            "zoom": -4,
+            "label": "initial viewport",
+            "ms": 5246.300000011921,
+            "timedOut": false,
+            "framesWaited": 115,
+            "nodes": 1000,
+            "edges": 3000,
+            "domElements": 26087,
+            "svgPaths": 9034,
+            "heap": {
+              "usedJSHeapSize": 147607655,
+              "totalJSHeapSize": 200789115
+            }
+          },
+          "heapBeforeOpen": {
+            "usedJSHeapSize": 76098182,
+            "totalJSHeapSize": 101739338
+          }
+        },
+        "workingViewport": {
+          "label": "zoom 1.0 at centre",
+          "ms": 77.09999999403954,
+          "timedOut": false,
+          "framesWaited": 16,
+          "nodes": 12,
+          "edges": 63,
+          "domElements": 741,
+          "svgPaths": 160,
+          "heap": {
+            "usedJSHeapSize": 96080436,
+            "totalJSHeapSize": 189729856
+          }
+        },
+        "fitViewport": {
+          "zoom": -4,
+          "label": "zoom to fit",
+          "ms": 3189.7000000178814,
+          "timedOut": false,
+          "framesWaited": 110,
+          "nodes": 1000,
+          "edges": 3000,
+          "domElements": 26087,
+          "svgPaths": 9034,
+          "heap": {
+            "usedJSHeapSize": 102195841,
+            "totalJSHeapSize": 188573321
+          }
+        },
+        "pan": [
+          {
+            "label": "pan at zoom 1.0",
+            "zoom": 0,
+            "focused": true,
+            "frames": {
+              "count": 180,
+              "p50": 10.699999999720603,
+              "p95": 17.799999999813735,
+              "max": 28.59999999962747,
+              "over16_7": 9,
+              "over33": 0
+            },
+            "longTasks": {
+              "count": 0,
+              "totalMs": 0,
+              "max": 0
+            },
+            "mountedNodesSamples": [
+              10,
+              12,
+              18,
+              12,
+              18,
+              12
+            ],
+            "after": {
+              "nodes": 12,
+              "edges": 67,
+              "domElements": 765,
+              "svgPaths": 168
+            }
+          },
+          {
+            "label": "pan at fit zoom",
+            "zoom": -4,
+            "focused": true,
+            "frames": {
+              "count": 180,
+              "p50": 85.70000000018626,
+              "p95": 103.60000000009313,
+              "max": 150.10000000009313,
+              "over16_7": 179,
+              "over33": 178
+            },
+            "longTasks": {
+              "count": 78,
+              "totalMs": 4552,
+              "max": 139
+            },
+            "mountedNodesSamples": [
+              659,
+              752,
+              876,
+              999,
+              872,
+              744
+            ],
+            "after": {
+              "nodes": 651,
+              "edges": 1988,
+              "domElements": 17223,
+              "svgPaths": 5963
+            }
+          }
+        ],
+        "panFiltered": {
+          "label": "pan at zoom 1.0 under bench-topic",
+          "zoom": 0,
+          "focused": true,
+          "frames": {
+            "count": 180,
+            "p50": 3.6000000000931323,
+            "p95": 7.199999999720603,
+            "max": 10.700000000186265,
+            "over16_7": 0,
+            "over33": 0
+          },
+          "longTasks": {
+            "count": 0,
+            "totalMs": 0,
+            "max": 0
+          },
+          "mountedNodesSamples": [
+            6,
+            7,
+            7,
+            5,
+            10,
+            6
+          ],
+          "after": {
+            "nodes": 7,
+            "edges": 10,
+            "domElements": 308,
+            "svgPaths": 54
+          }
+        },
+        "filters": [
+          {
+            "label": "first filter (cold parse + index)",
+            "view": "bench-topic",
+            "syncMs": 64.59999999403954,
+            "twoFramesMs": 75.40000000596046,
+            "yamlParses": 1000,
+            "visibleNodes": 48,
+            "visibleEdges": 11,
+            "mounted": {
+              "nodes": 1,
+              "edges": 1,
+              "domElements": 116,
+              "svgPaths": 36
+            },
+            "heapDelta": -16988166
+          },
+          {
+            "label": "back to All",
+            "view": "All",
+            "syncMs": 4.200000017881393,
+            "twoFramesMs": 16.700000017881393,
+            "yamlParses": 0,
+            "visibleNodes": 1000,
+            "visibleEdges": 3000,
+            "mounted": {
+              "nodes": 12,
+              "edges": 63,
+              "domElements": 741,
+              "svgPaths": 160
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "warm same view",
+            "view": "bench-topic",
+            "syncMs": 8.900000005960464,
+            "twoFramesMs": 17.600000023841858,
+            "yamlParses": 0,
+            "visibleNodes": 48,
+            "visibleEdges": 11,
+            "mounted": {
+              "nodes": 1,
+              "edges": 1,
+              "domElements": 116,
+              "svgPaths": 36
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "warm other node view",
+            "view": "bench-nested",
+            "syncMs": 8.5,
+            "twoFramesMs": 21,
+            "yamlParses": 0,
+            "visibleNodes": 290,
+            "visibleEdges": 249,
+            "mounted": {
+              "nodes": 3,
+              "edges": 5,
+              "domElements": 186,
+              "svgPaths": 44
+            },
+            "heapDelta": 7360870
+          },
+          {
+            "label": "warm edge view",
+            "view": "bench-edges",
+            "syncMs": 66.7999999821186,
+            "twoFramesMs": 74.2999999821186,
+            "yamlParses": 3000,
+            "visibleNodes": 367,
+            "visibleEdges": 261,
+            "mounted": {
+              "nodes": 5,
+              "edges": 6,
+              "domElements": 238,
+              "svgPaths": 46
+            },
+            "heapDelta": -4647462
+          },
+          {
+            "label": "final All",
+            "view": "All",
+            "syncMs": 4.0999999940395355,
+            "twoFramesMs": 19.299999982118607,
+            "yamlParses": 0,
+            "visibleNodes": 1000,
+            "visibleEdges": 3000,
+            "mounted": {
+              "nodes": 12,
+              "edges": 67,
+              "domElements": 765,
+              "svgPaths": 168
+            },
+            "heapDelta": 0
+          }
+        ],
+        "preservation": {
+          "before": {
+            "graph": "66e423d1f875aa190eb1e3ec8dc617106c77197fe9819b543fd89adb246fe79a",
+            "disk": "1b43fa4484a486c19abf70d796e32f91bbefca363b8c212178eb161d2f3176d3",
+            "history": 1,
+            "current": 0
+          },
+          "after": {
+            "graph": "66e423d1f875aa190eb1e3ec8dc617106c77197fe9819b543fd89adb246fe79a",
+            "disk": "1b43fa4484a486c19abf70d796e32f91bbefca363b8c212178eb161d2f3176d3",
+            "history": 1,
+            "current": 0
+          },
+          "graphUnchanged": true,
+          "diskUnchanged": true,
+          "historyUnchanged": true,
+          "diskMatchesFixture": true
+        },
+        "commit": {
+          "nodeId": "n467",
+          "generic": {
+            "ms": 6,
+            "historyEntriesAdded": 1,
+            "lastSnapshotBytes": 734499,
+            "heapDelta": 0
+          },
+          "forkYamlPanel": {
+            "valid": true,
+            "focus": {
+              "active": true,
+              "connected": true,
+              "activeElement": "textarea.mkls-frontmatter-text"
+            },
+            "blurCommitMs": 22.099999994039536,
+            "committed": true,
+            "historyByBlur": {
+              "lengthDelta": 1,
+              "currentDelta": 1
+            },
+            "historyAfterEditEnd": {
+              "lengthDelta": 1,
+              "currentDelta": 1,
+              "note": "includes any native body-editing history"
+            }
+          }
+        },
+        "afterClose": {
+          "heap": {
+            "usedJSHeapSize": 68871214,
+            "totalJSHeapSize": 173801118
+          }
+        }
+      }
+    },
+    {
+      "shape": "sparse",
+      "count": 5000,
+      "expected": {
+        "nodes": 5000,
+        "edges": 15000
+      },
+      "fixture": "Bench/Bench-sparse-5000-2026-10-12T21-45-31-448Z.canvas",
+      "fixtureSha256": "8b2503f4b2479db2bed8924bc4d8315ee6416be8e010f308fa3b75e846cfe3e9",
+      "fixtureBytes": 5503279,
+      "report": "<workspace>/planning/advanced-canvas/evidence/bench/fork-ladder/sparse-5000.json",
+      "error": null,
+      "failures": [],
+      "warnings": [],
+      "phases": {
+        "idleFrames": {
+          "count": 60,
+          "p50": 3.6000000000931323,
+          "p95": 3.6999999997206032,
+          "max": 3.7000000001862645,
+          "over16_7": 0,
+          "over33": 0
+        },
+        "load": {
+          "openFileMs": 802.9000000059605,
+          "importedMs": 803,
+          "mountedStableMs": 19973.600000023842,
+          "note": "mountedStableMs = import time + time until the last mounted-DOM change (15 unchanged frames confirm stability)",
+          "initialViewport": {
+            "zoom": -4,
+            "label": "initial viewport",
+            "ms": 19170.600000023842,
+            "timedOut": false,
+            "framesWaited": 233,
+            "nodes": 2180,
+            "edges": 6972,
+            "domElements": 59359,
+            "svgPaths": 20518,
+            "heap": {
+              "usedJSHeapSize": 314721967,
+              "totalJSHeapSize": 359788171
+            }
+          },
+          "heapBeforeOpen": {
+            "usedJSHeapSize": 159676583,
+            "totalJSHeapSize": 208613343
+          }
+        },
+        "workingViewport": {
+          "label": "zoom 1.0 at centre",
+          "ms": 137.60000002384186,
+          "timedOut": false,
+          "framesWaited": 16,
+          "nodes": 15,
+          "edges": 77,
+          "domElements": 894,
+          "svgPaths": 188,
+          "heap": {
+            "usedJSHeapSize": 290832402,
+            "totalJSHeapSize": 361722386
+          }
+        },
+        "fitViewport": {
+          "zoom": -4,
+          "label": "zoom to fit",
+          "ms": 15662.399999976158,
+          "timedOut": false,
+          "framesWaited": 229,
+          "nodes": 2180,
+          "edges": 6972,
+          "domElements": 59359,
+          "svgPaths": 20518,
+          "heap": {
+            "usedJSHeapSize": 207214528,
+            "totalJSHeapSize": 340380972
+          }
+        },
+        "pan": [
+          {
+            "label": "pan at zoom 1.0",
+            "zoom": 0,
+            "focused": true,
+            "frames": {
+              "count": 180,
+              "p50": 7.100000000093132,
+              "p95": 14.300000000279397,
+              "max": 28.600000000093132,
+              "over16_7": 6,
+              "over33": 0
+            },
+            "longTasks": {
+              "count": 0,
+              "totalMs": 0,
+              "max": 0
+            },
+            "mountedNodesSamples": [
+              10,
+              15,
+              10,
+              15,
+              10,
+              15
+            ],
+            "after": {
+              "nodes": 15,
+              "edges": 76,
+              "domElements": 888,
+              "svgPaths": 186
+            }
+          },
+          {
+            "label": "pan at fit zoom",
+            "zoom": -4,
+            "focused": true,
+            "frames": {
+              "count": 180,
+              "p50": 232.1999999997206,
+              "p95": 335.8000000002794,
+              "max": 1296.4000000003725,
+              "over16_7": 179,
+              "over33": 179
+            },
+            "longTasks": {
+              "count": 181,
+              "totalMs": 32048,
+              "max": 1321
+            },
+            "mountedNodesSamples": [
+              1420,
+              1687,
+              1870,
+              1988,
+              2075,
+              2091
+            ],
+            "after": {
+              "nodes": 2118,
+              "edges": 6893,
+              "domElements": 58389,
+              "svgPaths": 20174
+            }
+          }
+        ],
+        "panFiltered": {
+          "label": "pan at zoom 1.0 under bench-topic",
+          "zoom": 0,
+          "focused": true,
+          "frames": {
+            "count": 180,
+            "p50": 3.6000000000931323,
+            "p95": 7.300000000279397,
+            "max": 17.899999999906868,
+            "over16_7": 1,
+            "over33": 0
+          },
+          "longTasks": {
+            "count": 0,
+            "totalMs": 0,
+            "max": 0
+          },
+          "mountedNodesSamples": [
+            8,
+            7,
+            3,
+            10,
+            7,
+            10
+          ],
+          "after": {
+            "nodes": 11,
+            "edges": 13,
+            "domElements": 418,
+            "svgPaths": 60
+          }
+        },
+        "filters": [
+          {
+            "label": "first filter (cold parse + index)",
+            "view": "bench-topic",
+            "syncMs": 272.7999999821186,
+            "twoFramesMs": 286.09999999403954,
+            "yamlParses": 5000,
+            "visibleNodes": 222,
+            "visibleEdges": 43,
+            "mounted": {
+              "nodes": 0,
+              "edges": 0,
+              "domElements": 87,
+              "svgPaths": 34
+            },
+            "heapDelta": 9162776
+          },
+          {
+            "label": "back to All",
+            "view": "All",
+            "syncMs": 19.099999994039536,
+            "twoFramesMs": 34.099999994039536,
+            "yamlParses": 0,
+            "visibleNodes": 5000,
+            "visibleEdges": 15000,
+            "mounted": {
+              "nodes": 15,
+              "edges": 77,
+              "domElements": 894,
+              "svgPaths": 188
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "warm same view",
+            "view": "bench-topic",
+            "syncMs": 38.099999994039536,
+            "twoFramesMs": 48.5,
+            "yamlParses": 0,
+            "visibleNodes": 222,
+            "visibleEdges": 43,
+            "mounted": {
+              "nodes": 0,
+              "edges": 0,
+              "domElements": 87,
+              "svgPaths": 34
+            },
+            "heapDelta": 14902146
+          },
+          {
+            "label": "warm other node view",
+            "view": "bench-nested",
+            "syncMs": 41,
+            "twoFramesMs": 47.30000001192093,
+            "yamlParses": 0,
+            "visibleNodes": 1310,
+            "visibleEdges": 1121,
+            "mounted": {
+              "nodes": 3,
+              "edges": 4,
+              "domElements": 180,
+              "svgPaths": 42
+            },
+            "heapDelta": 0
+          },
+          {
+            "label": "warm edge view",
+            "view": "bench-edges",
+            "syncMs": 262.5,
+            "twoFramesMs": 276.2000000178814,
+            "yamlParses": 15000,
+            "visibleNodes": 2082,
+            "visibleEdges": 1542,
+            "mounted": {
+              "nodes": 10,
+              "edges": 14,
+              "domElements": 401,
+              "svgPaths": 62
+            },
+            "heapDelta": 6754814
+          },
+          {
+            "label": "final All",
+            "view": "All",
+            "syncMs": 17.80000001192093,
+            "twoFramesMs": 34.400000005960464,
+            "yamlParses": 0,
+            "visibleNodes": 5000,
+            "visibleEdges": 15000,
+            "mounted": {
+              "nodes": 15,
+              "edges": 76,
+              "domElements": 888,
+              "svgPaths": 186
+            },
+            "heapDelta": 12437952
+          }
+        ],
+        "preservation": {
+          "before": {
+            "graph": "8ad5e44772d36ca479d06723c2c19e09af094d1e8d439397d1ac944ca852b3a4",
+            "disk": "8b2503f4b2479db2bed8924bc4d8315ee6416be8e010f308fa3b75e846cfe3e9",
+            "history": 1,
+            "current": 0
+          },
+          "after": {
+            "graph": "8ad5e44772d36ca479d06723c2c19e09af094d1e8d439397d1ac944ca852b3a4",
+            "disk": "8b2503f4b2479db2bed8924bc4d8315ee6416be8e010f308fa3b75e846cfe3e9",
+            "history": 1,
+            "current": 0
+          },
+          "graphUnchanged": true,
+          "diskUnchanged": true,
+          "historyUnchanged": true,
+          "diskMatchesFixture": true
+        },
+        "commit": {
+          "nodeId": "n2382",
+          "generic": {
+            "ms": 20,
+            "historyEntriesAdded": 1,
+            "lastSnapshotBytes": 3722011,
+            "heapDelta": 0
+          },
+          "forkYamlPanel": {
+            "valid": true,
+            "focus": {
+              "active": true,
+              "connected": true,
+              "activeElement": "textarea.mkls-frontmatter-text"
+            },
+            "blurCommitMs": 66,
+            "committed": true,
+            "historyByBlur": {
+              "lengthDelta": 1,
+              "currentDelta": 1
+            },
+            "historyAfterEditEnd": {
+              "lengthDelta": 1,
+              "currentDelta": 1,
+              "note": "includes any native body-editing history"
+            }
+          }
+        },
+        "afterClose": {
+          "heap": {
+            "usedJSHeapSize": 191280775,
+            "totalJSHeapSize": 347203171
+          }
+        }
+      }
+    },
+    {
+      "shape": "sparse",
+      "count": 10000,
+      "expected": {
+        "nodes": 10000,
+        "edges": 30000
+      },
+      "fixture": "Bench/Bench-sparse-10000-2026-10-12T21-45-31-448Z.canvas",
+      "fixtureSha256": "d55d9be2666cbb037f8244d8430725382c7092787f28d8966fa741475d6da3fe",
+      "fixtureBytes": 11019654,
+      "report": "<workspace>/planning/advanced-canvas/evidence/bench/fork-ladder/sparse-10000.json",
+      "error": null,
+      "failures": [],
+      "warnings": [],
+      "phases": {
+        "idleFrames": {
+          "count": 60,
+          "p50": 3.6000000000931323,
+          "p95": 3.7000000001862645,
+          "max": 3.7000000001862645,
+          "over16_7": 0,
+          "over33": 0
+        },
+        "load": {
+          "openFileMs": 1516.199999988079,
+          "importedMs": 1516.199999988079,
+          "mountedStableMs": 23653.40000000596,
+          "note": "mountedStableMs = import time + time until the last mounted-DOM change (15 unchanged frames confirm stability)",
+          "initialViewport": {
+            "zoom": -4,
+            "label": "initial viewport",
+            "ms": 22137.20000001788,
+            "timedOut": false,
+            "framesWaited": 252,
+            "nodes": 2368,
+            "edges": 7449,
+            "domElements": 63725,
+            "svgPaths": 22036,
+            "heap": {
+              "usedJSHeapSize": 426796896,
+              "totalJSHeapSize": 526401792
+            }
+          },
+          "heapBeforeOpen": {
+            "usedJSHeapSize": 304191072,
+            "totalJSHeapSize": 407121384
+          }
+        },
+        "workingViewport": {
+          "label": "zoom 1.0 at centre",
+          "ms": 174,
+          "timedOut": false,
+          "framesWaited": 16,
+          "nodes": 12,
+          "edges": 79,
+          "domElements": 837,
+          "svgPaths": 192,
+          "heap": {
+            "usedJSHeapSize": 432322738,
+            "totalJSHeapSize": 526402490
+          }
+        },
+        "fitViewport": {
+          "zoom": -4,
+          "label": "zoom to fit",
+          "ms": 17996.40000000596,
+          "timedOut": false,
+          "framesWaited": 247,
+          "nodes": 2368,
+          "edges": 7449,
+          "domElements": 63725,
+          "svgPaths": 22036,
+          "heap": {
+            "usedJSHeapSize": 380183773,
+            "totalJSHeapSize": 507912989
+          }
+        },
+        "pan": [
+          {
+            "label": "pan at zoom 1.0",
+            "zoom": 0,
+            "focused": true,
+            "frames": {
+              "count": 180,
+              "p50": 10.699999999720603,
+              "p95": 17.800000000279397,
+              "max": 28.59999999962747,
+              "over16_7": 10,
+              "over33": 0
+            },
+            "longTasks": {
+              "count": 0,
+              "totalMs": 0,
+              "max": 0
+            },
+            "mountedNodesSamples": [
+              10,
+              12,
+              18,
+              12,
+              18,
+              12
+            ],
+            "after": {
+              "nodes": 12,
+              "edges": 60,
+              "domElements": 723,
+              "svgPaths": 154
+            }
+          },
+          {
+            "label": "pan at fit zoom",
+            "zoom": -4,
+            "focused": true,
+            "frames": {
+              "count": 180,
+              "p50": 246.39999999990687,
+              "p95": 339.29999999981374,
+              "max": 1928.3000000002794,
+              "over16_7": 179,
+              "over33": 179
+            },
+            "longTasks": {
+              "count": 181,
+              "totalMs": 34000,
+              "max": 1959
+            },
+            "mountedNodesSamples": [
+              1564,
+              1811,
+              2013,
+              2130,
+              2134,
+              2138
+            ],
+            "after": {
+              "nodes": 2226,
+              "edges": 7469,
+              "domElements": 62709,
+              "svgPaths": 21650
+            }
+          }
+        ],
+        "panFiltered": {
+          "label": "pan at zoom 1.0 under bench-topic",
+          "zoom": 0,
+          "focused": true,
+          "frames": {
+            "count": 180,
+            "p50": 3.6000000000931323,
+            "p95": 7.2000000001862645,
+            "max": 10.800000000279397,
+            "over16_7": 0,
+            "over33": 0
+          },
+          "longTasks": {
+            "count": 0,
+            "totalMs": 0,
+            "max": 0
+          },
+          "mountedNodesSamples": [
+            5,
+            4,
+            5,
+            2,
+            6,
+            3
+          ],
+          "after": {
+            "nodes": 4,
+            "edges": 9,
+            "domElements": 233,
+            "svgPaths": 52
+          }
+        },
+        "filters": [
+          {
+            "label": "first filter (cold parse + index)",
+            "view": "bench-topic",
+            "syncMs": 425.40000000596046,
+            "twoFramesMs": 438.59999999403954,
+            "yamlParses": 10000,
+            "visibleNodes": 487,
+            "visibleEdges": 106,
+            "mounted": {
+              "nodes": 1,
+              "edges": 0,
+              "domElements": 110,
+              "svgPaths": 34
+            },
+            "heapDelta": 32052186
+          },
+          {
+            "label": "back to All",
+            "view": "All",
+            "syncMs": 31.099999994039536,
+            "twoFramesMs": 48.400000005960464,
+            "yamlParses": 0,
+            "visibleNodes": 10000,
+            "visibleEdges": 30000,
+            "mounted": {
+              "nodes": 12,
+              "edges": 79,
+              "domElements": 837,
+              "svgPaths": 192
+            },
+            "heapDelta": 2416113
+          },
+          {
+            "label": "warm same view",
+            "view": "bench-topic",
+            "syncMs": 84.40000000596046,
+            "twoFramesMs": 95.30000001192093,
+            "yamlParses": 0,
+            "visibleNodes": 487,
+            "visibleEdges": 106,
+            "mounted": {
+              "nodes": 1,
+              "edges": 0,
+              "domElements": 110,
+              "svgPaths": 34
+            },
+            "heapDelta": -2303027
+          },
+          {
+            "label": "warm other node view",
+            "view": "bench-nested",
+            "syncMs": 74.40000000596046,
+            "twoFramesMs": 85.40000000596046,
+            "yamlParses": 0,
+            "visibleNodes": 2613,
+            "visibleEdges": 2149,
+            "mounted": {
+              "nodes": 5,
+              "edges": 2,
+              "domElements": 214,
+              "svgPaths": 38
+            },
+            "heapDelta": -547471
+          },
+          {
+            "label": "warm edge view",
+            "view": "bench-edges",
+            "syncMs": 476.60000002384186,
+            "twoFramesMs": 487.10000002384186,
+            "yamlParses": 30000,
+            "visibleNodes": 4053,
+            "visibleEdges": 3005,
+            "mounted": {
+              "nodes": 2,
+              "edges": 4,
+              "domElements": 157,
+              "svgPaths": 42
+            },
+            "heapDelta": 30452321
+          },
+          {
+            "label": "final All",
+            "view": "All",
+            "syncMs": 29.399999976158142,
+            "twoFramesMs": 46.19999998807907,
+            "yamlParses": 0,
+            "visibleNodes": 10000,
+            "visibleEdges": 30000,
+            "mounted": {
+              "nodes": 12,
+              "edges": 60,
+              "domElements": 723,
+              "svgPaths": 154
+            },
+            "heapDelta": 0
+          }
+        ],
+        "preservation": {
+          "before": {
+            "graph": "2a3db6a5046c987cb8f780e7bf829dc504ca30872dcc45534b5edfc340b43a34",
+            "disk": "d55d9be2666cbb037f8244d8430725382c7092787f28d8966fa741475d6da3fe",
+            "history": 1,
+            "current": 0
+          },
+          "after": {
+            "graph": "2a3db6a5046c987cb8f780e7bf829dc504ca30872dcc45534b5edfc340b43a34",
+            "disk": "d55d9be2666cbb037f8244d8430725382c7092787f28d8966fa741475d6da3fe",
+            "history": 1,
+            "current": 0
+          },
+          "graphUnchanged": true,
+          "diskUnchanged": true,
+          "historyUnchanged": true,
+          "diskMatchesFixture": true
+        },
+        "commit": {
+          "nodeId": "n4853",
+          "generic": {
+            "ms": 41.400000005960464,
+            "historyEntriesAdded": 1,
+            "lastSnapshotBytes": 7458386,
+            "heapDelta": -13323301
+          },
+          "forkYamlPanel": {
+            "valid": true,
+            "focus": {
+              "active": true,
+              "connected": true,
+              "activeElement": "textarea.mkls-frontmatter-text"
+            },
+            "blurCommitMs": 139.09999999403954,
+            "committed": true,
+            "historyByBlur": {
+              "lengthDelta": 1,
+              "currentDelta": 1
+            },
+            "historyAfterEditEnd": {
+              "lengthDelta": 1,
+              "currentDelta": 1,
+              "note": "includes any native body-editing history"
+            }
+          }
+        },
+        "afterClose": {
+          "heap": {
+            "usedJSHeapSize": 676360532,
+            "totalJSHeapSize": 756591804
+          }
+        }
+      }
+    }
+  ]
+}

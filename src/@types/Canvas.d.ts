@@ -66,6 +66,8 @@ export interface CanvasEphemeralState {
   match?: {
     matches?: number[][]
     nodeId?: string
+    // Codex (LLM agent): stable edge navigation, independent of display order.
+    edgeId?: string
   }
 }
 
@@ -234,6 +236,14 @@ export interface CanvasPopupMenu {
   render(): void
 }
 
+// Codex (LLM agent): native drag callbacks are returned to Obsidian's gesture handler.
+export interface CanvasDragCallbacks {
+  move?: (event: PointerEvent) => void
+  end?: (event: PointerEvent) => void
+  cancel?: () => void
+  cleanup?: () => void
+}
+
 export interface Canvas {
   app: App
 
@@ -353,6 +363,7 @@ export interface Canvas {
   requestSave(): void
 
   onResize(): void
+  handleDragWithPan(event: PointerEvent, callbacks: CanvasDragCallbacks): CanvasDragCallbacks
 
   // Custom
   searchEl?: HTMLElement

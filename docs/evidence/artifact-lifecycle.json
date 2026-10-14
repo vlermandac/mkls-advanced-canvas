@@ -1,0 +1,304 @@
+{
+  "checks": [
+    {
+      "name": "collapsed runtime keeps full canonical records",
+      "passed": true
+    },
+    {
+      "name": "disable restores complete native model",
+      "passed": true,
+      "details": {
+        "metadata": {
+          "version": "1.0-1.0",
+          "frontmatter": {},
+          "propertyGraph": {
+            "version": 1,
+            "views": [
+              {
+                "id": "v",
+                "name": "View",
+                "mode": "nodes"
+              }
+            ]
+          }
+        },
+        "nodes": [
+          {
+            "id": "g",
+            "type": "group",
+            "collapsed": true,
+            "x": 0,
+            "y": 0,
+            "width": 700,
+            "height": 400,
+            "label": "Group"
+          },
+          {
+            "id": "a",
+            "type": "text",
+            "text": "Inside",
+            "propertyGraph": {
+              "version": 1,
+              "yaml": "# preserved\nstatus: accepted\n"
+            },
+            "x": 30,
+            "y": 50,
+            "width": 200,
+            "height": 100
+          },
+          {
+            "id": "b",
+            "type": "text",
+            "text": "Other",
+            "x": 350,
+            "y": 50,
+            "width": 200,
+            "height": 100
+          }
+        ],
+        "edges": [
+          {
+            "id": "ab",
+            "propertyGraph": {
+              "version": 1,
+              "yaml": "kind: reference\n"
+            },
+            "fromNode": "a",
+            "fromSide": "right",
+            "toNode": "b",
+            "toSide": "left",
+            "label": "Uses"
+          }
+        ]
+      }
+    },
+    {
+      "name": "disable preserves YAML and view definitions",
+      "passed": true
+    },
+    {
+      "name": "disable projection cleanup adds no content history",
+      "passed": true
+    },
+    {
+      "name": "vanilla history retains collapsed member records",
+      "passed": true
+    },
+    {
+      "name": "vanilla save after disable keeps flat canonical members",
+      "passed": true,
+      "details": {
+        "metadata": {
+          "version": "1.0-1.0",
+          "frontmatter": {},
+          "propertyGraph": {
+            "version": 1,
+            "views": [
+              {
+                "id": "v",
+                "name": "View",
+                "mode": "nodes"
+              }
+            ]
+          }
+        },
+        "nodes": [
+          {
+            "id": "g",
+            "type": "group",
+            "collapsed": true,
+            "x": 0,
+            "y": 0,
+            "width": 700,
+            "height": 400,
+            "label": "Group"
+          },
+          {
+            "id": "a",
+            "type": "text",
+            "text": "Inside",
+            "x": 30,
+            "y": 50,
+            "width": 200,
+            "height": 100,
+            "propertyGraph": {
+              "version": 1,
+              "yaml": "# preserved\nstatus: accepted\n"
+            }
+          },
+          {
+            "id": "b",
+            "type": "text",
+            "text": "Other",
+            "x": 350,
+            "y": 50,
+            "width": 200,
+            "height": 100
+          }
+        ],
+        "edges": [
+          {
+            "id": "ab",
+            "fromNode": "a",
+            "toNode": "b",
+            "fromSide": "right",
+            "toSide": "left",
+            "label": "Uses",
+            "propertyGraph": {
+              "version": 1,
+              "yaml": "kind: reference\n"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "reload restores property extension and collapsed projection",
+      "passed": true
+    },
+    {
+      "name": "overview option hides edge hit areas while zoomed out",
+      "passed": true
+    },
+    {
+      "name": "zoom-in restores edge hit areas",
+      "passed": true
+    },
+    {
+      "name": "overview option does not change graph or history",
+      "passed": true,
+      "details": {
+        "before": {
+          "metadata": {
+            "version": "1.0-1.0",
+            "frontmatter": {},
+            "propertyGraph": {
+              "version": 1,
+              "views": [
+                {
+                  "id": "v",
+                  "name": "View",
+                  "mode": "nodes"
+                }
+              ]
+            }
+          },
+          "nodes": [
+            {
+              "id": "g",
+              "type": "group",
+              "x": 0,
+              "y": 0,
+              "width": 700,
+              "height": 400,
+              "label": "Group"
+            },
+            {
+              "id": "a",
+              "type": "text",
+              "text": "Inside",
+              "propertyGraph": {
+                "version": 1,
+                "yaml": "# preserved\nstatus: accepted\n"
+              },
+              "x": 30,
+              "y": 50,
+              "width": 200,
+              "height": 100
+            },
+            {
+              "id": "b",
+              "type": "text",
+              "text": "Other",
+              "x": 350,
+              "y": 50,
+              "width": 200,
+              "height": 100
+            }
+          ],
+          "edges": [
+            {
+              "id": "ab",
+              "propertyGraph": {
+                "version": 1,
+                "yaml": "kind: reference\n"
+              },
+              "fromNode": "a",
+              "fromSide": "right",
+              "toNode": "b",
+              "toSide": "left",
+              "label": "Uses"
+            }
+          ]
+        },
+        "after": {
+          "metadata": {
+            "version": "1.0-1.0",
+            "frontmatter": {},
+            "propertyGraph": {
+              "version": 1,
+              "views": [
+                {
+                  "id": "v",
+                  "name": "View",
+                  "mode": "nodes"
+                }
+              ]
+            }
+          },
+          "nodes": [
+            {
+              "id": "g",
+              "type": "group",
+              "x": 0,
+              "y": 0,
+              "width": 700,
+              "height": 400,
+              "label": "Group"
+            },
+            {
+              "id": "a",
+              "type": "text",
+              "text": "Inside",
+              "propertyGraph": {
+                "version": 1,
+                "yaml": "# preserved\nstatus: accepted\n"
+              },
+              "x": 30,
+              "y": 50,
+              "width": 200,
+              "height": 100
+            },
+            {
+              "id": "b",
+              "type": "text",
+              "text": "Other",
+              "x": 350,
+              "y": 50,
+              "width": 200,
+              "height": 100
+            }
+          ],
+          "edges": [
+            {
+              "id": "ab",
+              "propertyGraph": {
+                "version": 1,
+                "yaml": "kind: reference\n"
+              },
+              "fromNode": "a",
+              "fromSide": "right",
+              "toNode": "b",
+              "toSide": "left",
+              "label": "Uses"
+            }
+          ]
+        },
+        "historyBefore": 3,
+        "historyAfter": 3
+      }
+    }
+  ],
+  "passed": 10,
+  "fixture": "Lifecycle-1791848917861.canvas"
+}

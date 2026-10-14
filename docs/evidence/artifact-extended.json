@@ -1,0 +1,550 @@
+{
+  "checks": [
+    {
+      "name": "portal projection imported with source properties",
+      "passed": true
+    },
+    {
+      "name": "legacy adoption explicit and one history action",
+      "passed": true
+    },
+    {
+      "name": "adoption undo restores original raw source",
+      "passed": true
+    },
+    {
+      "name": "f1 instance properties persist",
+      "passed": true,
+      "details": {
+        "id": "f1",
+        "type": "file",
+        "file": "Instance QA.md",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "instance: first\n"
+        },
+        "x": 900,
+        "y": 0,
+        "width": 200,
+        "height": 100
+      }
+    },
+    {
+      "name": "f2 instance properties persist",
+      "passed": true,
+      "details": {
+        "id": "f2",
+        "type": "file",
+        "file": "Instance QA.md",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "instance: second\n"
+        },
+        "x": 1150,
+        "y": 0,
+        "width": 200,
+        "height": 100
+      }
+    },
+    {
+      "name": "l instance properties persist",
+      "passed": true,
+      "details": {
+        "id": "l",
+        "type": "link",
+        "url": "https://example.com",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "kind: website\n"
+        },
+        "x": 900,
+        "y": 200,
+        "width": 200,
+        "height": 100
+      }
+    },
+    {
+      "name": "g instance properties persist",
+      "passed": true,
+      "details": {
+        "id": "g",
+        "type": "group",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "status: accepted\nkind: section\n"
+        },
+        "x": 0,
+        "y": 0,
+        "width": 750,
+        "height": 450,
+        "label": "Group"
+      }
+    },
+    {
+      "name": "two instances do not alter linked note",
+      "passed": true
+    },
+    {
+      "name": "cancel does not alter canonical body",
+      "passed": true
+    },
+    {
+      "name": "cancelled source recovered",
+      "passed": true
+    },
+    {
+      "name": "stale modal cannot overwrite newer body",
+      "passed": true
+    },
+    {
+      "name": "stale recovery shows current body",
+      "passed": true
+    },
+    {
+      "name": "source save body and YAML one undo",
+      "passed": true
+    },
+    {
+      "name": "source undo restores newer body",
+      "passed": true
+    },
+    {
+      "name": "invalid inline YAML retained without replacing committed properties",
+      "passed": true
+    },
+    {
+      "name": "invalid draft undo restores committed record",
+      "passed": true
+    },
+    {
+      "name": "additive import preserves active YAML panel",
+      "passed": true
+    },
+    {
+      "name": "reload replaces stale property panel",
+      "passed": true
+    },
+    {
+      "name": "reload recovery cannot replace new body",
+      "passed": true
+    },
+    {
+      "name": "inline recovery loads YAML without stale body",
+      "passed": true
+    },
+    {
+      "name": "label hook registry bounded after reload",
+      "passed": true
+    },
+    {
+      "name": "portal contents follow visible local host",
+      "passed": true
+    },
+    {
+      "name": "hidden portal host also hides its projection",
+      "passed": true
+    },
+    {
+      "name": "filtered containment keeps hidden group members",
+      "passed": true
+    },
+    {
+      "name": "native group drag moves hidden member",
+      "passed": true,
+      "details": {
+        "before": {
+          "a": {
+            "x": 40,
+            "y": 70
+          },
+          "b": {
+            "x": 300,
+            "y": 70
+          }
+        },
+        "a": {
+          "id": "a",
+          "type": "text",
+          "text": "Reloaded body",
+          "propertyGraph": {
+            "version": 1,
+            "yaml": "status: accepted\n"
+          },
+          "x": 80,
+          "y": 100,
+          "width": 200,
+          "height": 100
+        },
+        "b": {
+          "id": "b",
+          "type": "text",
+          "text": "Body B",
+          "propertyGraph": {
+            "version": 1,
+            "yaml": "status: provisional\n"
+          },
+          "x": 340,
+          "y": 100,
+          "width": 200,
+          "height": 100
+        }
+      }
+    },
+    {
+      "name": "stable navigation reveals hidden ID using All",
+      "passed": true
+    },
+    {
+      "name": "native duplicate remaps IDs and preserves properties",
+      "passed": true,
+      "details": {
+        "nodes": [
+          {
+            "id": "d04fd1c13011eefd",
+            "type": "text",
+            "text": "Reloaded body",
+            "propertyGraph": {
+              "version": 1,
+              "yaml": "status: accepted\n"
+            },
+            "x": 80,
+            "y": 800,
+            "width": 200,
+            "height": 100
+          },
+          {
+            "id": "db7170e58d3a1748",
+            "type": "text",
+            "text": "Body B",
+            "propertyGraph": {
+              "version": 1,
+              "yaml": "status: provisional\n"
+            },
+            "x": 340,
+            "y": 800,
+            "width": 200,
+            "height": 100
+          }
+        ],
+        "edges": [
+          {
+            "id": "bf57e66588d46cc6",
+            "propertyGraph": {
+              "version": 1,
+              "yaml": "kind: dependency\n"
+            },
+            "fromNode": "d04fd1c13011eefd",
+            "fromSide": "right",
+            "toNode": "db7170e58d3a1748",
+            "toSide": "left",
+            "label": "uses"
+          }
+        ],
+        "center": {
+          "x": 310,
+          "y": 150
+        }
+      }
+    },
+    {
+      "name": "duplicate leaves original properties unchanged",
+      "passed": true
+    },
+    {
+      "name": "visible deletion removes hidden incident edge",
+      "passed": true
+    },
+    {
+      "name": "deletion undo restores hidden incident edge",
+      "passed": true
+    },
+    {
+      "name": "duplicate view works with omitted edge predicate",
+      "passed": true
+    },
+    {
+      "name": "current-view export includes only matching IDs and valid endpoints",
+      "passed": true
+    },
+    {
+      "name": "collapsed group preserves hidden-member YAML in canonical save",
+      "passed": true
+    },
+    {
+      "name": "expanding group restores element properties",
+      "passed": true
+    },
+    {
+      "name": "portal projection returns after group import",
+      "passed": true
+    },
+    {
+      "name": "portal source properties cannot be edited in projection",
+      "passed": true
+    },
+    {
+      "name": "explicit All export contains complete records",
+      "passed": true
+    },
+    {
+      "name": "unknown view version preserved",
+      "passed": true
+    },
+    {
+      "name": "unknown element version preserved on edit",
+      "passed": true
+    },
+    {
+      "name": "disk reopen retains per-instance properties and views",
+      "passed": true
+    },
+    {
+      "name": "file backlink cache carries stable element ID",
+      "passed": true
+    },
+    {
+      "name": "cached backlink selects original ID after live reordering",
+      "passed": true
+    },
+    {
+      "name": "native geometry predicate initially excludes node",
+      "passed": true
+    },
+    {
+      "name": "native move invalidates retained filter index",
+      "passed": true
+    },
+    {
+      "name": "stale view editor refuses concurrent metadata overwrite",
+      "passed": true
+    },
+    {
+      "name": "separate window starts in All independently",
+      "passed": true
+    },
+    {
+      "name": "separate window view selection remains independent",
+      "passed": true
+    },
+    {
+      "name": "window detach releases property state and hooks",
+      "passed": true
+    }
+  ],
+  "passed": 48,
+  "version": "7.1.0-mkls.1",
+  "fixture": "Extended-1791848906626.canvas",
+  "graph": {
+    "metadata": {
+      "version": "1.0-1.0",
+      "frontmatter": {},
+      "propertyGraph": {
+        "version": 1,
+        "views": [
+          {
+            "id": "accepted",
+            "name": "Accepted",
+            "mode": "nodes",
+            "nodes": {
+              "kind": "condition",
+              "scope": "properties",
+              "path": [
+                "status"
+              ],
+              "operator": "equals",
+              "value": "accepted"
+            }
+          },
+          {
+            "id": "c5787f1b-3b77-495f-b1d3-4294c6c9d62f",
+            "name": "Accepted copy",
+            "mode": "nodes",
+            "nodes": {
+              "kind": "condition",
+              "scope": "properties",
+              "path": [
+                "status"
+              ],
+              "operator": "equals",
+              "value": "accepted"
+            },
+            "edges": {
+              "kind": "all",
+              "conditions": []
+            }
+          },
+          {
+            "id": "geometry",
+            "name": "Geometry",
+            "mode": "nodes",
+            "nodes": {
+              "kind": "condition",
+              "scope": "native",
+              "path": [
+                "x"
+              ],
+              "operator": "gt",
+              "value": 360
+            }
+          }
+        ],
+        "concurrent": "kept"
+      }
+    },
+    "nodes": [
+      {
+        "id": "g",
+        "type": "group",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "status: accepted\nkind: section\n"
+        },
+        "x": 40,
+        "y": 30,
+        "width": 750,
+        "height": 450,
+        "label": "Group"
+      },
+      {
+        "id": "f1",
+        "type": "file",
+        "file": "Instance QA.md",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "instance: first\n"
+        },
+        "x": 900,
+        "y": 0,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "id": "f2",
+        "type": "file",
+        "file": "Instance QA.md",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "instance: second\n"
+        },
+        "x": 1150,
+        "y": 0,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "id": "l",
+        "type": "link",
+        "url": "https://example.com",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "kind: website\n"
+        },
+        "x": 900,
+        "y": 200,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "id": "legacy",
+        "type": "text",
+        "text": "---\nkind: theorem\nref: \"[[Foo|bar]]\"\n---\n$A$",
+        "x": 1150,
+        "y": 200,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "id": "p",
+        "type": "file",
+        "file": "Portal Source.canvas",
+        "portal": true,
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "status: accepted\n"
+        },
+        "x": 900,
+        "y": 500,
+        "width": 300,
+        "height": 200
+      },
+      {
+        "id": "a",
+        "type": "text",
+        "text": "Reloaded body",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "status: accepted\n"
+        },
+        "x": 80,
+        "y": 100,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "id": "b",
+        "type": "text",
+        "text": "Body B",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "status: provisional\n"
+        },
+        "x": 390,
+        "y": 100,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "id": "d04fd1c13011eefd",
+        "type": "text",
+        "text": "Reloaded body",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "status: accepted\n"
+        },
+        "x": 80,
+        "y": 800,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "id": "db7170e58d3a1748",
+        "type": "text",
+        "text": "Body B",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "status: provisional\n"
+        },
+        "x": 340,
+        "y": 800,
+        "width": 200,
+        "height": 100
+      }
+    ],
+    "edges": [
+      {
+        "id": "bf57e66588d46cc6",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "kind: dependency\n"
+        },
+        "fromNode": "d04fd1c13011eefd",
+        "fromSide": "right",
+        "toNode": "db7170e58d3a1748",
+        "toSide": "left",
+        "label": "uses"
+      },
+      {
+        "id": "ab",
+        "propertyGraph": {
+          "version": 1,
+          "yaml": "kind: dependency\n"
+        },
+        "fromNode": "a",
+        "fromSide": "right",
+        "toNode": "b",
+        "toSide": "left",
+        "label": "uses"
+      }
+    ]
+  }
+}

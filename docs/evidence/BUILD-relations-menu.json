@@ -1,0 +1,26 @@
+{
+  "authorship": "Codex and Claude (LLM agents)",
+  "version": "7.1.0-mkls.3",
+  "sourceBranch": "mkls-property-graph",
+  "baselineImplementation": "da55f2d",
+  "bundleSha256": {
+    "main.js": "fc4d483920e6b23f518e815f78b93bf603e198bad6684b99f400f196c384f2ec",
+    "styles.css": "cf0e59528720b390d2e06fc673b4b0c14cafae9adde031d9e4dd83c7fb643109",
+    "manifest.json": "51c60236a3a73e3561625cd7511bccf3c8d8fdc174ca91f7061a18ac72f27403"
+  },
+  "installedQaFilesMatch": true,
+  "runningQaBuild": "Last observed mkls.2; mkls.3 files copied but not loaded",
+  "package": "mkls-advanced-canvas-7.1.0-mkls.3.zip",
+  "packageSha256": "cb3f3d43a30bf437082d62f2f3addd4c3845f12b8cbc00c015cbc2e4965f421e",
+  "verification": {
+    "typescript": "passed",
+    "lint": "passed",
+    "productionBuild": "passed",
+    "nativeVisualInspection": "pending; CLI socket pathname absent; shared main process not restarted. See RELATION_MENU_UX.md",
+    "newTests": "not added or run",
+    "regressionSuites": "not run",
+    "stressBenchmarks": "not run, as requested"
+  },
+  "nativeApiSource": "Obsidian 1.14.4 new-connection gesture implementation inspected; new hook not yet observed natively",
+  "olderEvidence": "mkls.1 tests/timings and mkls.2 property UX remain historical, not verification of mkls.3."
+}

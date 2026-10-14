@@ -1,0 +1,12 @@
+npm notice run mkls-advanced-canvas@7.1.0-mkls.1 postinstall
+npm notice run patch-package
+patch-package 8.0.1
+Applying patches...
+No patch files found
+
+added 388 packages in 3s
+npm warn install-scripts 2 packages had install scripts blocked because they are not covered by allowScripts:
+npm warn install-scripts   @parcel/watcher@2.5.1 (install: node scripts/build-from-source.js)
+npm warn install-scripts   esbuild@0.25.4 (postinstall: node install.js)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.

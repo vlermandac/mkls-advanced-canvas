@@ -1,0 +1,7 @@
+// Authored by Codex (LLM agent). Bounded native schema editor.
+.mkls-schema-fields { max-height: 60vh; overflow-y: auto; }
+.mkls-schema-field { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-s); margin-block: 12px; padding: 8px; }
+.mkls-schema-field .setting-item { flex-wrap: wrap; gap: 8px; }
+.mkls-schema-field .setting-item-control { flex-wrap: wrap; }
+.mkls-schema-field textarea { max-width: 100%; min-height: 54px; font-family: var(--font-monospace); }
+.mkls-schema-error { color: var(--text-error); white-space: pre-wrap; }
