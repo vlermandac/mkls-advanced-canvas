@@ -5,9 +5,10 @@ import { deferElementSave, isTransactionActive } from '../property-graph/transac
 import { around } from "monkey-around"
 import { editorInfoField, requireApiVersion, Side, WorkspaceLeaf, Notice } from "obsidian"
 import { canvasImports } from '../utils/import-coordinator'
+import { awaitConnectionTarget, connectionPreviews, hasConnectionTarget, markConnectionPreview, readyConnectionPreviews } from '../property-graph/connection-preview'
 import { CanvasData, CanvasEdgeData, CanvasNodeData } from "src/@types/AdvancedJsonCanvas"
 import type { ExtendedCachedMetadata } from "src/@types/Obsidian"
-import { BBox, Canvas, CanvasEdge, CanvasElement, CanvasElementsData, CanvasEphemeralState, CanvasNode, CanvasPopupMenu, CanvasView, CanvasWorkspaceLeaf, NodeInteractionLayer, Position, SelectionData } from "src/@types/Canvas"
+import { BBox, Canvas, CanvasDragCallbacks, CanvasEdge, CanvasElement, CanvasElementsData, CanvasEphemeralState, CanvasNode, CanvasPopupMenu, CanvasView, CanvasWorkspaceLeaf, NodeInteractionLayer, Position, SelectionData } from "src/@types/Canvas"
 import BBoxHelper from "src/utils/bbox-helper"
 import MigrationHelper from "src/utils/migration-helper"
 import JSONC from "tiny-jsonc"
@@ -19,6 +20,13 @@ function geometrySignature(element: CanvasNode | CanvasEdge): string {
 }
 
 export default class CanvasPatcher extends Patcher {
+  private connectionStarts = new WeakMap<Canvas, { node: CanvasNode; pointerId: number; edge?: CanvasEdge; dispose: () => void }>()
+  prepareUnload(): void {
+    for (const canvas of this.plugin.getCanvases()) for (const edge of [...connectionPreviews(canvas) ?? []]) {
+      if (canvas.edges.get(edge.id) === edge) canvas.removeEdge(edge)
+      markConnectionPreview(edge, false)
+    }
+  }
   protected async patch() {
     this.plugin.register(() => {
       for (const element of [...this.elementUninstallers.keys()]) this.uninstallNodeElementPatches(element)
@@ -230,6 +238,10 @@ export default class CanvasPatcher extends Patcher {
         return invoke(next, this, node)
       }),
       addEdge: Patcher.OverrideExisting(next => function (edge: CanvasEdge): void {
+        const start = that.connectionStarts.get(this)
+        if (start && start.node === edge.from.node && !start.edge) {
+          start.edge = edge; markConnectionPreview(edge, true)
+        }
         canvasImports.changed(this)
         geometryRevisions.set(edge, geometrySignature(edge))
         that.patchEdge(edge)
@@ -244,6 +256,7 @@ export default class CanvasPatcher extends Patcher {
         return result
       }),
       removeEdge: Patcher.OverrideExisting(next => function (edge: CanvasEdge): void {
+        markConnectionPreview(edge, false)
         canvasImports.changed(this)
         that.uninstallNodeElementPatches(edge)
         const result = invoke(next, this, edge)
@@ -325,8 +338,25 @@ export default class CanvasPatcher extends Patcher {
       }),
       getData: Patcher.OverrideExisting(next => function (...args: Parameters<typeof next>): CanvasData {
         const result = invoke(next, this, ...args)
+        const previews = connectionPreviews(this)
+        if (previews?.size) result.edges = result.edges.filter(data => !previews.has(this.edges.get(data.id)!))
         that.plugin.app.workspace.trigger('advanced-canvas:data-requested', this, result)
         return result
+      }),
+      handleDragWithPan: Patcher.OverrideExisting(next => function (event: PointerEvent, callbacks: CanvasDragCallbacks): CanvasDragCallbacks {
+        const start = that.connectionStarts.get(this), edge = start?.edge
+        if (!start || !edge || start.pointerId !== event.pointerId || !callbacks.end) return invoke(next, this, event, callbacks)
+        return invoke(next, this, event, { ...callbacks, end: (drop: PointerEvent) => {
+          const control = { handled: false }
+          if (this.edges.get(edge.id) === edge && hasConnectionTarget(edge))
+            that.plugin.app.workspace.trigger('advanced-canvas:new-connection-drop:before', this, edge, drop, control)
+          if (!control.handled) {
+            if (hasConnectionTarget(edge)) markConnectionPreview(edge, false)
+            else awaitConnectionTarget(edge) // Native blank-space menu may add a target later.
+            callbacks.end?.call(callbacks, drop)
+            that.plugin.app.workspace.trigger('advanced-canvas:edge-data-changed', this, edge)
+          }
+        } })
       }),
       importData: Patcher.OverrideExisting(next => function (data: CanvasData, clearCanvas?: boolean, silent?: boolean): void {
         const targetFilePath = this.view.file?.path
@@ -351,6 +381,10 @@ export default class CanvasPatcher extends Patcher {
       }),
       requestSave: Patcher.OverrideExisting(next => function (...args: Parameters<typeof next>): void {
         if (isTransactionActive(this)) return
+        for (const edge of readyConnectionPreviews(this)) {
+          markConnectionPreview(edge, false)
+          that.plugin.app.workspace.trigger('advanced-canvas:edge-data-changed', this, edge)
+        }
         that.plugin.app.workspace.trigger('advanced-canvas:canvas-saved:before', this)
         const result = invoke(next, this, ...args)
         that.plugin.app.workspace.trigger('advanced-canvas:canvas-saved:after', this)
@@ -494,18 +528,33 @@ export default class CanvasPatcher extends Patcher {
         return result
       }),
       onConnectionPointerdown: Patcher.OverrideExisting(next => function (e: PointerEvent, side: Side): void {
+        if (!e.isPrimary || e.button !== 0 || this.canvas.readonly) return invoke(next, this, e, side)
+        const canvas = this.canvas, doc = this.nodeEl.ownerDocument
+        that.connectionStarts.get(canvas)?.dispose()
+        const start = { node: this, pointerId: e.pointerId, edge: undefined as CanvasEdge | undefined, dispose: () => {} }
+        that.connectionStarts.set(canvas, start)
         const addEdgeEventRef = that.plugin.app.workspace.on('advanced-canvas:edge-added', (_canvas: Canvas, edge: CanvasEdge) => {
+          if (_canvas !== canvas || edge !== start.edge) return
           that.plugin.app.workspace.trigger('advanced-canvas:edge-connection-dragging:before', this.canvas, edge, e, true, "to")
           that.plugin.app.workspace.offref(addEdgeEventRef)
 
           // Listen for pointer up event
-          activeDocument.addEventListener('pointerup', (e: PointerEvent) => {
+          after = (e: PointerEvent) => {
+            if (e.pointerId !== start.pointerId) return
             that.plugin.app.workspace.trigger('advanced-canvas:edge-connection-dragging:after', this.canvas, edge, e, true, "to")
-          }, { once: true })
+          }
+          doc.addEventListener('pointerup', after)
         })
-
-        const result = invoke(next, this, e, side)
-        return result
+        let after: ((event: PointerEvent) => void) | undefined
+        const finish = (event: PointerEvent) => { if (event.pointerId === start.pointerId) queueMicrotask(() => start.dispose()) }
+        doc.addEventListener('pointerup', finish); doc.addEventListener('pointercancel', finish)
+        start.dispose = Patcher.registerUninstaller(that.plugin, () => {
+          that.plugin.app.workspace.offref(addEdgeEventRef)
+          doc.removeEventListener('pointerup', finish); doc.removeEventListener('pointercancel', finish)
+          if (after) doc.removeEventListener('pointerup', after)
+          if (that.connectionStarts.get(canvas) === start) that.connectionStarts.delete(canvas)
+        })
+        try { return invoke(next, this, e, side) } catch (error) { start.dispose(); throw error }
       }),
       // File nodes
       setFile: next => function (...args: Parameters<typeof next>): void {

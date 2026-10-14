@@ -13,7 +13,7 @@ import PortalsCanvasExtension from './portals-canvas-extension'
 export default class PropertySchemaCanvasExtension extends CanvasExtension {
   isEnabled() { return true }
   init(): void {
-    this.plugin.addCommand({ id: 'edit-property-schema', name: 'Edit canvas node and edge property schema', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !canvas.readonly, canvas => this.open(canvas)) })
+    this.plugin.addCommand({ id: 'edit-property-schema', name: 'Edit canvas node and edge property schema', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !canvas.readonly, canvas => this.openEditor(canvas)) })
     this.plugin.addCommand({ id: 'apply-property-schema-defaults', name: 'Apply schema defaults to selected nodes and edges', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !canvas.readonly && canvas.selection.size > 0 && canvas.metadata?.propertyGraph?.schema !== undefined, canvas => this.applyDefaults(canvas)) })
   }
   private config(canvas: Canvas): GraphConfiguration | undefined {
@@ -21,7 +21,7 @@ export default class PropertySchemaCanvasExtension extends CanvasExtension {
     if (config !== undefined && (config?.version !== 1 || !Array.isArray(config.views))) throw Error('Unsupported property graph configuration; original data is preserved')
     return config
   }
-  private open(canvas: Canvas): void {
+  openEditor(canvas: Canvas): void {
     try {
       const config = this.config(canvas), revision = JSON.stringify(config?.schema), file = canvas.view.file.path
       const checkRevision = () => {

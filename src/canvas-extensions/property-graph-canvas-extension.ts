@@ -15,21 +15,26 @@ import { DraftStore, SourceDraft, sourceRevision } from '../property-graph/draft
 import PortalsCanvasExtension from './portals-canvas-extension'
 import { canvasImports } from '../utils/import-coordinator'
 // Claude (LLM agent): screen-space property panel and schema checks on every property write path.
-import PropertyPanel, { type CommitResult, type PanelSnapshot } from '../property-graph/property-panel'
+import PropertyPanel, { DEFAULT_HINT, type CommitResult, type PanelSnapshot } from '../property-graph/property-panel'
 import { schemaFor, validateElementProperties } from '../property-graph/schema'
+// Claude (LLM agent): persistent canvas menu; schema and rule editors open on this exact canvas.
+import CanvasMenu, { type GuidanceStatus } from '../property-graph/canvas-menu'
+import { relationshipGuidance } from '../property-graph/relationships'
+import PropertySchemaCanvasExtension from './property-schema-canvas-extension'
+import RelationshipRulesCanvasExtension from './relationship-rules-canvas-extension'
+import { isConnectionPreview } from '../property-graph/connection-preview'
 
 type Element = CanvasNode | CanvasEdge
 type Data = CanvasNodeData | CanvasEdgeData
 interface State {
   canvas: Canvas; service: PropertyService; active?: string; visible: Visibility
   frame?: number; dispose: () => void
-  panel?: PropertyPanel; labels: WeakSet<object>
+  menu?: CanvasMenu; panel?: PropertyPanel; labels: WeakSet<object>
   labelDisposers: Map<CanvasEdge, () => void>
   endpoints: Map<string, string>
   portalElements: Map<string, Set<Element>>
   index?: ViewIndex; reload: boolean; dirtyNodes: Set<string>; dirtyEdges: Set<string>
   indexKey?: string; appliedActive?: string
-  controlsKey?: string
   file: string
 }
 interface NativeVisibilityCanvas extends Canvas {
@@ -161,7 +166,7 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
     this.plugin.registerEvent(events.on('advanced-canvas:node-resized', (canvas, node) => this.schedule(canvas, node, false)))
     // Claude (LLM agent): the panel follows the selection and hides on deselection.
     this.plugin.registerEvent(events.on('advanced-canvas:selection-changed', canvas => this.showPanel(canvas)))
-    this.plugin.registerEvent(events.on('advanced-canvas:readonly-changed', canvas => this.states.get(canvas)?.panel?.refresh(true)))
+    this.plugin.registerEvent(events.on('advanced-canvas:readonly-changed', canvas => { this.states.get(canvas)?.panel?.refresh(true); this.controls(canvas) }))
     this.plugin.registerEvent(events.on('advanced-canvas:edge-changed', (canvas, edge) => {
       this.hookLabel(canvas, edge); const state = this.states.get(canvas); this.applyElement(state, edge); this.refreshPanel(canvas, edge)
       const ends = edge.from.node.id + '\u0000' + edge.to.node.id
@@ -191,33 +196,10 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
     this.plugin.addCommand({ id: 'focus-element-properties', name: 'Focus properties of selected node or edge', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => canvas.selection.size === 1, canvas => { this.showPanel(canvas); this.states.get(canvas)?.panel?.expandAndFocus() }) })
     this.plugin.addCommand({ id: 'create-property-view', name: 'Create property view', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !canvas.readonly, canvas => this.viewEditor(canvas)) })
     this.plugin.addCommand({ id: 'show-all-properties', name: 'Show complete canvas', checkCallback: CanvasHelper.canvasCommand(this.plugin, () => true, canvas => this.setView(canvas)) })
-    this.plugin.addCommand({ id: 'edit-property-view', name: 'Edit current property view', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !!this.states.get(canvas)?.active && !canvas.readonly, canvas => {
-      const current = this.views(canvas).find(view => view.id === this.states.get(canvas)?.active)
-      this.viewEditor(canvas, current)
-    }) })
-    this.plugin.addCommand({ id: 'duplicate-property-view', name: 'Duplicate current property view', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !!this.states.get(canvas)?.active && !canvas.readonly, canvas => {
-      const current = this.views(canvas).find(view => view.id === this.states.get(canvas)?.active)
-      if (current) this.viewEditor(canvas, { ...current, id: crypto.randomUUID(), name: current.name + ' copy' })
-    }) })
-    this.plugin.addCommand({ id: 'export-property-view', name: 'Export current view as a new canvas', checkCallback: CanvasHelper.canvasCommand(this.plugin, () => true, async canvas => {
-      const state = this.states.get(canvas)
-      if (state?.active) this.refresh(state)
-      const data = JSON.parse(JSON.stringify(canvas.getData())) as CanvasData
-      if (state?.active) {
-        data.nodes = data.nodes.filter(node => state.visible.nodes.has(node.id))
-        data.edges = data.edges.filter(edge => state.visible.edges.has(edge.id))
-      }
-      const base = canvas.view.file.path.replace(/\.canvas$/, '')
-      const path = base + '-view-' + Date.now() + '.canvas'
-      try { await this.plugin.app.vault.create(path, JSON.stringify(data, null, 2)); new Notice('Exported ' + path) }
-      catch (error) { new Notice('Unable to export view: ' + String(error)) }
-    }) })
-    this.plugin.addCommand({ id: 'delete-property-view', name: 'Delete current property view', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !!this.states.get(canvas)?.active && !canvas.readonly, canvas => {
-      const id = this.states.get(canvas)?.active
-      if (!this.writableViews(canvas)) return
-      canvasTransaction(canvas, () => { const config = canvas.metadata.propertyGraph!; canvas.metadata.propertyGraph = { ...config, version: 1, views: config.views.filter(view => view?.id !== id) } }, true, true)
-      this.setView(canvas)
-    }) })
+    this.plugin.addCommand({ id: 'edit-property-view', name: 'Edit current property view', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !!this.states.get(canvas)?.active && !canvas.readonly, canvas => this.editView(canvas)) })
+    this.plugin.addCommand({ id: 'duplicate-property-view', name: 'Duplicate current property view', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !!this.states.get(canvas)?.active && !canvas.readonly, canvas => this.duplicateView(canvas)) })
+    this.plugin.addCommand({ id: 'export-property-view', name: 'Export current view as a new canvas', checkCallback: CanvasHelper.canvasCommand(this.plugin, () => true, canvas => this.exportView(canvas)) })
+    this.plugin.addCommand({ id: 'delete-property-view', name: 'Delete current property view', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => !!this.states.get(canvas)?.active && !canvas.readonly, canvas => this.deleteView(canvas)) })
     this.plugin.addCommand({ id: 'adopt-node-frontmatter', name: 'Adopt selected text node frontmatter as properties', checkCallback: CanvasHelper.canvasCommand(this.plugin, canvas => canvas.selection.size === 1 && !canvas.readonly, canvas => {
       const node = [...canvas.selection][0] as CanvasNode; const data = node.getData()
       if (data.type !== 'text') { new Notice('Select a text node'); return }
@@ -236,6 +218,40 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
       this.draftStore = new DraftStore(this.plugin.app.vault.adapter, this.plugin.manifest.dir + '/drafts')
       for (const canvas of this.plugin.getCanvases()) this.attach(canvas)
     })
+  }
+  // Claude (LLM agent): view actions shared by the commands and the persistent menu.
+  private currentView(canvas: Canvas): SavedView | undefined {
+    return this.views(canvas).find(view => view.id === this.states.get(canvas)?.active)
+  }
+  private editView(canvas: Canvas): void {
+    const current = this.currentView(canvas)
+    if (current) this.viewEditor(canvas, current)
+  }
+  private duplicateView(canvas: Canvas): void {
+    const current = this.currentView(canvas)
+    if (current) this.viewEditor(canvas, { ...current, id: crypto.randomUUID(), name: current.name + ' copy' })
+  }
+  private deleteView(canvas: Canvas): void {
+    const id = this.states.get(canvas)?.active
+    if (!id || canvas.readonly || !this.writableViews(canvas)) return
+    canvasTransaction(canvas, () => { const config = canvas.metadata.propertyGraph!; canvas.metadata.propertyGraph = { ...config, version: 1, views: config.views.filter(view => view?.id !== id) } }, true, true)
+    this.setView(canvas)
+  }
+  private async exportView(canvas: Canvas): Promise<void> {
+    const state = this.states.get(canvas)
+    if (state?.active) this.refresh(state)
+    const data = JSON.parse(JSON.stringify(canvas.getData())) as CanvasData
+    if (state?.active) {
+      data.nodes = data.nodes.filter(node => state.visible.nodes.has(node.id))
+      data.edges = data.edges.filter(edge => state.visible.edges.has(edge.id))
+    }
+    const base = canvas.view.file.path.replace(/\.canvas$/, '')
+    const path = base + '-view-' + Date.now() + '.canvas'
+    try { await this.plugin.app.vault.create(path, JSON.stringify(data, null, 2)); new Notice('Exported ' + path) }
+    catch (error) { new Notice('Unable to export view: ' + String(error)) }
+  }
+  private extension<T extends CanvasExtension>(type: abstract new (...args: never[]) => T): T | undefined {
+    return this.plugin.canvasExtensions.find((extension): extension is T => extension instanceof type)
   }
   private views(canvas: Canvas): SavedView[] {
     const config = canvas.metadata?.propertyGraph
@@ -281,22 +297,37 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
     this.attach(canvas); const state = this.states.get(canvas)!
     state.active = id; this.refresh(state); this.controls(canvas)
   }
+  // Claude (LLM agent): the persistent menu replaces the former view select in the canvas controls.
   private controls(canvas: Canvas): void {
-    const container = canvas.canvasControlsEl
-    if (!container) return
-    const key = JSON.stringify([this.views(canvas).map(view => [view.id, view.name]), this.states.get(canvas)?.active])
-    const state = this.states.get(canvas)
-    if (state?.controlsKey === key && container.querySelector('.mkls-view-select')) return
-    if (state) state.controlsKey = key
-    let select = container.querySelector<HTMLSelectElement>('.mkls-view-select')
-    if (!select) {
-      select = container.createEl('select', { cls: 'mkls-view-select', attr: { 'aria-label': 'Canvas property view' } })
-      select.onchange = () => this.setView(canvas, select!.value || undefined)
+    this.states.get(canvas)?.menu?.update()
+  }
+  private createMenu(state: State): CanvasMenu {
+    const canvas = state.canvas
+    const schemaStatus = (): GuidanceStatus => {
+      const nodes = schemaFor(canvas.metadata?.propertyGraph, 'nodes'), edges = schemaFor(canvas.metadata?.propertyGraph, 'edges')
+      const unsupported = [nodes, edges].find(item => item.status === 'unsupported')
+      if (unsupported) return { status: 'unsupported', error: unsupported.error }
+      if (canvas.metadata?.propertyGraph?.schema === undefined) return { status: 'none' }
+      return { status: 'valid', count: (nodes.definition?.fields.length ?? 0) + (edges.definition?.fields.length ?? 0) }
     }
-    select.replaceChildren()
-    select.createEl('option', { text: 'All', value: '' })
-    for (const view of this.views(canvas)) select.createEl('option', { text: view.name, value: view.id })
-    select.value = this.states.get(canvas)?.active ?? ''
+    return new CanvasMenu({
+      app: this.plugin.app, canvas,
+      views: () => this.views(canvas).map(view => ({ id: view.id, name: view.name })),
+      activeView: () => state.active,
+      setView: id => this.setView(canvas, id),
+      createView: () => { if (!canvas.readonly) this.viewEditor(canvas) },
+      editView: () => { if (!canvas.readonly) this.editView(canvas) },
+      duplicateView: () => { if (!canvas.readonly) this.duplicateView(canvas) },
+      deleteView: () => this.deleteView(canvas),
+      exportView: () => void this.exportView(canvas),
+      schemaStatus,
+      openSchema: () => this.extension(PropertySchemaCanvasExtension)?.openEditor(canvas),
+      rulesStatus: () => {
+        const rules = relationshipGuidance(canvas.metadata?.propertyGraph)
+        return { status: rules.status, count: rules.value?.rules.length, error: rules.error }
+      },
+      openRelationshipRules: () => this.extension(RelationshipRulesCanvasExtension)?.openEditor(canvas),
+    })
   }
   private attach(canvas: Canvas): void {
     if (this.unloading || !canvas || this.states.has(canvas)) return
@@ -324,11 +355,12 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
         next.call(canvas, element)
       }
     })
-    state.panel = this.createPanel(state)
-    // Claude (LLM agent): after native placement, move the toolbar beside the panel only when they overlap.
-    const menu = canvas.menu, panel = state.panel
+    state.menu = this.createMenu(state)
+    state.panel = this.createPanel(state, state.menu)
+    // Claude (LLM agent): after native placement, move the toolbar beside the menu only when they overlap.
+    const menu = canvas.menu, pluginMenu = state.menu
     const uninstallMenu = menu ? around(menu as typeof menu & { render(...args: unknown[]): void }, {
-      render: (next: (...args: unknown[]) => void) => function (this: unknown, ...args: unknown[]) { const result = next.apply(this, args) as unknown; panel.avoidMenu(); return result }
+      render: (next: (...args: unknown[]) => void) => function (this: unknown, ...args: unknown[]) { const result = next.apply(this, args) as unknown; pluginMenu.avoidToolbar(); return result }
     }) : () => {}
     state.dispose = Patcher.registerUninstaller(this.plugin, () => { uninstall(); uninstallMenu() })
     this.refresh(state); this.controls(canvas); this.showPanel(canvas)
@@ -338,6 +370,8 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
     const state = this.states.get(canvas)
     if (!state) return
     if (element && PortalsCanvasExtension.isPortalElement(element.id)) { this.applyElement(state, element); return }
+    // Claude (LLM agent): a new-connection preview draws in every view but never enters the index.
+    if (element && 'from' in element && isConnectionPreview(element)) { this.applyElement(state, element); return }
     if (reload || (element && !('from' in element) && element.getData().type === 'group')) state.reload = true
     else if (element) ('from' in element ? state.dirtyEdges : state.dirtyNodes).add(element.id)
     if (!state.active) return
@@ -380,7 +414,7 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
     }
     state.appliedActive = state.active
     state.dirtyNodes.clear(); state.dirtyEdges.clear()
-    const hiddenSelected = [...canvas.selection].filter(item => isEdge(item.getData()) ? !state.visible.edges.has(item.id) : !state.visible.nodes.has(item.id))
+    const hiddenSelected = [...canvas.selection].filter(item => !this.visible(state, item))
     if (hiddenSelected.length) canvas.updateSelection(() => { for (const item of hiddenSelected) canvas.selection.delete(item) })
     canvas.markViewportChanged()
   }
@@ -395,6 +429,7 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
   }
   private visible(state: State, element: CanvasElement): boolean {
     if (!state.active) return true
+    if ('from' in element && isConnectionPreview(element as CanvasEdge)) return true
     if (PortalsCanvasExtension.isPortalElement(element.id)) return state.visible.nodes.has(PortalsCanvasExtension.getNestedIds(element.id)[0])
     return ('from' in element ? state.visible.edges : state.visible.nodes).has(element.id)
   }
@@ -417,7 +452,7 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
   }
   // Claude (LLM agent): property panel host. Every panel write is checked here against the
   // element revision, schema revision, YAML syntax and schema before touching the canvas.
-  private createPanel(state: State): PropertyPanel {
+  private createPanel(state: State, menu: CanvasMenu): PropertyPanel {
     const canvas = state.canvas
     const current = (element: Element) => (isEdge(element.getData()) ? canvas.edges.get(element.id) : canvas.nodes.get(element.id)) === element
     const refuse = (snapshot: PanelSnapshot, yaml: string, message: string): CommitResult => { this.retain(snapshot.file, snapshot.element, yaml, snapshot.revision); return { status: 'refused', message } }
@@ -461,7 +496,7 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
       },
       retain: (snapshot, yaml) => this.retain(snapshot.file, snapshot.element, yaml, snapshot.revision),
       openSource: element => { if (canvas.selection.size === 1 && canvas.selection.has(element)) void this.openSource(canvas) },
-    })
+    }, menu.sectionEl, () => menu.avoidToolbar())
   }
   private readOnlyReason(canvas: Canvas, element: Element): string | undefined {
     if (PortalsCanvasExtension.isPortalElement(element.id)) return 'Projected from another canvas; edit its properties in the source canvas.'
@@ -473,9 +508,11 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
   private showPanel(canvas: Canvas): void {
     const panel = this.states.get(canvas)?.panel
     if (!panel) return
-    const selected = canvas.selection.size === 1 ? [...canvas.selection][0] as Element : undefined
+    const count = canvas.selection.size
+    const selected = count === 1 ? [...canvas.selection][0] as Element : undefined
     const visible = selected && (isEdge(selected.getData()) ? canvas.edges.get(selected.id) : canvas.nodes.get(selected.id)) === selected
-    panel.show(visible ? selected : undefined)
+    // Claude (LLM agent): the menu stays; without a single element it explains how to edit properties.
+    panel.show(visible ? selected : undefined, count > 1 ? { subtitle: `${count} selected`, text: 'Properties are edited one element at a time. Select a single card or edge.' } : DEFAULT_HINT)
   }
   private refreshPanel(canvas: Canvas, element?: Element): void {
     const panel = this.states.get(canvas)?.panel
@@ -527,13 +564,13 @@ export default class PropertyGraphCanvasExtension extends CanvasExtension {
     const state = this.states.get(view.canvas)
     if (!state) return
     state.panel?.destroy(); state.panel = undefined
+    state.menu?.destroy(); state.menu = undefined
     for (const dispose of state.labelDisposers.values()) dispose()
     state.labelDisposers.clear()
     if (state.frame !== undefined) state.canvas.canvasEl.win.cancelAnimationFrame(state.frame)
     state.active = undefined
     for (const node of state.canvas.nodes.values()) this.applyElement(state, node)
     for (const edge of state.canvas.edges.values()) this.applyElement(state, edge)
-    state.canvas.canvasControlsEl.querySelector('.mkls-view-select')?.remove()
     state.dispose(); state.service.clear(); this.states.delete(view.canvas)
   }
 }

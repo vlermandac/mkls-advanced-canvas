@@ -4,7 +4,7 @@ Authored by Claude (LLM agent), 2026-10-12. Status: **native results measured fo
 
 ## Version scope
 
-These numbers describe the `7.1.0-mkls.1` development builds. The schema/property UI follow-up `7.1.0-mkls.2` was not stress-tested or benchmarked again, as requested by the user. The old native harnesses target the previous inline YAML editor; their UI selectors are historical and must be updated before reuse. Core filter/routing results remain historical evidence, not new-version timing guarantees.
+These numbers describe the `7.1.0-mkls.1` development builds. The schema/property UI follow-up `7.1.0-mkls.2` and persistent-menu/relationship follow-up `7.1.0-mkls.3` were not stress-tested or benchmarked again, as requested by the user. The old native harnesses target the previous inline YAML editor; their UI selectors are historical and must be updated before reuse. Core filter/routing results remain historical evidence, not new-version timing guarantees.
 
 ## Measured so far (outside Obsidian)
 

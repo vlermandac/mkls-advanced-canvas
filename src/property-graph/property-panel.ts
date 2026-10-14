@@ -1,9 +1,9 @@
 // Authored by Claude (LLM agent) for the MKLS-maintained fork; see AGENTS.md.
 //
-// Screen-space Properties panel for the single selected node or edge. It lives in the canvas
-// wrapper, outside the zoom/pan transform, docked at the top inline-start corner (a bottom sheet on
-// narrow canvases), so it never sits in the native selection toolbar's zone above the selection.
-// All writes go through PropertyPanelHost.commit, which validates YAML and schema before writing.
+// Properties section of the persistent canvas menu (canvas-menu.ts). The menu places it in screen
+// space, outside the zoom/pan transform. It edits the single selected node or edge and shows a
+// selection hint otherwise. All writes go through PropertyPanelHost.commit, which validates YAML
+// and schema before writing.
 import { Platform, setIcon, type App } from 'obsidian'
 import type { Canvas, CanvasEdge, CanvasNode } from '../@types/Canvas'
 import { parseProperties } from './properties'
@@ -37,6 +37,9 @@ type Mode = 'fields' | 'yaml'
 interface FieldSource { source: string; values: PropertyMap | null; draft?: 'mapping' | 'syntax' }
 type ControlType = SchemaFieldType | 'null'
 const COLLAPSED_KEY = 'mkls-property-panel-collapsed', MODE_KEY = 'mkls-property-panel-mode'
+/** Shown when no single element is selected; `subtitle` sits beside the section title. */
+export interface SelectionHint { subtitle: string; text: string }
+export const DEFAULT_HINT: SelectionHint = { subtitle: 'Nothing selected', text: 'Select one card or edge to see and edit its properties.' }
 const TYPE_LABELS: Record<ControlType, string> = { text: 'Text', number: 'Number', boolean: 'Checkbox', date: 'Date', list: 'List', object: 'Object', null: 'Empty' }
 const TYPE_ICONS: Record<ControlType, string> = { text: 'text', number: 'binary', boolean: 'check-square', date: 'calendar', list: 'list', object: 'braces', null: 'circle-slash' }
 const NUMBER = /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?$/
@@ -87,38 +90,36 @@ export default class PropertyPanel {
   private stale = false
   private committing = false
   private renderTimer?: number
-  private resize: ResizeObserver
   private yamlFocusLine?: number
+  private hint = DEFAULT_HINT
 
-  constructor(private host: PropertyPanelHost) {
-    const wrapper = host.canvas.wrapperEl
+  /** `layoutChanged` runs after each render so the menu can keep clear of the native toolbar. */
+  constructor(private host: PropertyPanelHost, parent: HTMLElement, private layoutChanged: () => void) {
     this.collapsed = host.app.loadLocalStorage(COLLAPSED_KEY) === true
     this.mode = host.app.loadLocalStorage(MODE_KEY) === 'yaml' ? 'yaml' : 'fields'
-    this.el = wrapper.createDiv({ cls: 'mkls-property-panel', attr: { role: 'region', 'aria-label': 'Element properties' } })
-    this.el.hide()
+    this.el = parent.createDiv({ cls: 'mkls-property-panel', attr: { role: 'region', 'aria-label': 'Element properties' } })
     this.headerEl = this.el.createDiv({ cls: 'mkls-property-panel-header' })
     this.bodyEl = this.el.createDiv({ cls: 'mkls-property-panel-body' })
-    // Keep canvas gestures, shortcuts and clipboard handlers away from the editor controls.
-    for (const type of ['pointerdown', 'mousedown', 'click', 'dblclick', 'contextmenu', 'wheel', 'keydown', 'keyup', 'copy', 'cut', 'paste'])
-      this.el.addEventListener(type, event => event.stopPropagation())
     this.el.addEventListener('focusout', event => {
       if (!this.el.contains(event.relatedTarget as Node | null) && this.stale && !this.pending) this.scheduleRender()
     })
-    this.resize = new (wrapper.win as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver(() => this.layout())
-    this.resize.observe(wrapper)
-    this.layout()
+    this.render()
   }
 
   get element(): PanelElement | undefined { return this.snapshot?.element }
 
-  /** Shows the panel for one element, or hides it (deselection) after committing pending input. */
-  show(element: PanelElement | undefined): void {
-    if (element === this.snapshot?.element) return
+  /**
+   * Shows one element's properties, or (after committing pending input) the hint for no or several
+   * selected elements.
+   */
+  show(element: PanelElement | undefined, hint = DEFAULT_HINT): void {
+    if (element && element === this.snapshot?.element) return
+    if (!element && !this.snapshot && hint.subtitle === this.hint.subtitle && hint.text === this.hint.text) return
     this.flush()
     this.message = undefined; this.stale = false; this.yamlFocusLine = undefined
     this.snapshot = element ? this.capture(element) : undefined
-    if (!element) { this.el.hide(); this.bodyEl.empty(); this.avoidMenu(); return }
-    this.el.show(); this.render()
+    this.hint = hint
+    this.render()
   }
 
   /** The shown element or the schema may have changed outside the panel. */
@@ -166,36 +167,12 @@ export default class PropertyPanel {
 
   destroy(): void {
     this.flush()
-    this.resize.disconnect()
     if (this.renderTimer !== undefined) this.el.win.clearTimeout(this.renderTimer)
     this.el.remove()
   }
 
-  /** Moves the native selection toolbar beside the panel when the two would overlap. */
-  avoidMenu(): void {
-    const menu = this.host.canvas.menu as typeof this.host.canvas.menu & { containerEl?: HTMLElement }
-    const container = menu.containerEl, menuEl = menu.menuEl
-    if (!container?.isConnected || !this.el.isShown()) return
-    const panel = this.el.getBoundingClientRect(), box = menuEl.getBoundingClientRect(), frame = this.host.canvas.wrapperEl.getBoundingClientRect()
-    const overlaps = box.width > 0 && box.left < panel.right && box.right > panel.left && box.top < panel.bottom && box.bottom > panel.top
-    if (!overlaps) return
-    const gap = 8
-    if (this.el.dataset.layout === 'sheet') {
-      container.style.top = `${Math.max(10, panel.top - frame.top - box.height - gap)}px`; return
-    }
-    const rtl = this.el.doc.body.hasClass('mod-rtl')
-    const shifted = rtl ? panel.left - frame.left - box.width - gap : panel.right - frame.left + gap
-    if (shifted >= 10 && shifted + box.width <= frame.width - 10) container.style.left = `${shifted}px`
-    else container.style.top = `${Math.min(frame.height - box.height - 10, panel.bottom - frame.top + gap)}px`
-  }
-
   private capture(element: PanelElement): PanelSnapshot {
     return { element, file: this.host.file(), revision: this.host.revision(element), schemaRevision: this.host.schemaRevision() }
-  }
-
-  private layout(): void {
-    const width = this.host.canvas.wrapperEl.clientWidth
-    this.el.dataset.layout = width > 0 && width < 560 ? 'sheet' : 'dock'
   }
 
   private setCollapsed(collapsed: boolean): void {
@@ -268,12 +245,13 @@ export default class PropertyPanel {
 
   private render(): void {
     const snapshot = this.snapshot
-    if (!snapshot) return
+    if (!snapshot) { this.renderHint(); return }
     const focus = this.focusState()
     const element = snapshot.element
     const fields = this.fieldSource(element)
     const values = fields.values
     this.el.toggleClass('is-collapsed', this.collapsed)
+    this.el.removeClass('is-empty')
 
     this.headerEl.empty()
     const toggle = this.headerEl.createEl('button', { cls: 'mkls-property-panel-toggle', attr: { 'aria-expanded': String(!this.collapsed), 'aria-label': this.collapsed ? 'Expand properties' : 'Collapse properties' } })
@@ -289,13 +267,28 @@ export default class PropertyPanel {
     }
 
     this.bodyEl.empty()
-    if (this.collapsed) { this.avoidMenu(); return }
+    if (this.collapsed) { this.layoutChanged(); return }
     this.bodyEl.createDiv({ cls: 'mkls-property-panel-messages' })
     this.renderMessages()
     if (this.mode === 'yaml') this.renderYaml(snapshot)
     else this.renderFields(snapshot, fields)
     this.restoreFocus(focus)
-    this.avoidMenu()
+    this.layoutChanged()
+  }
+
+  /** No single selection: a header that still collapses, and a one-line hint. */
+  private renderHint(): void {
+    this.el.toggleClass('is-collapsed', this.collapsed)
+    this.el.addClass('is-empty')
+    this.headerEl.empty()
+    const toggle = this.headerEl.createEl('button', { cls: 'mkls-property-panel-toggle', attr: { 'aria-expanded': String(!this.collapsed), 'aria-label': this.collapsed ? 'Expand properties' : 'Collapse properties' } })
+    setIcon(toggle.createSpan({ cls: 'mkls-property-panel-chevron' }), 'chevron-down')
+    toggle.createSpan({ cls: 'mkls-property-panel-title', text: 'Properties' })
+    toggle.createSpan({ cls: 'mkls-property-panel-subtitle', text: this.hint.subtitle })
+    toggle.onclick = () => this.setCollapsed(!this.collapsed)
+    this.bodyEl.empty()
+    if (!this.collapsed) this.bodyEl.createDiv({ cls: 'mkls-property-hint mkls-property-selection-hint', text: this.hint.text })
+    this.layoutChanged()
   }
 
   private iconButton(parent: HTMLElement, icon: string, label: string, onClick: () => void, active = false): HTMLButtonElement {

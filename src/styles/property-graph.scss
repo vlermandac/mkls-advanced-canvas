@@ -1,7 +1,6 @@
 // Authored by Codex (LLM agent): functional visibility and source editing only.
 .mkls-view-hidden { display: none !important; pointer-events: none !important; }
 .mkls-source-editor, .mkls-filter-editor { width: 100%; min-height: 180px; font-family: var(--font-monospace); }
-.mkls-view-select { max-width: 180px; }
 
 // Codex (LLM agent): rendering-only option; native overview class clears on zoom-in.
 .canvas-wrapper[data-lightweight-overview-enabled="true"].mod-zoomed-out {
@@ -10,10 +9,11 @@
   .canvas-edges path { transition: none !important; }
 }
 
-// Claude (LLM agent): screen-space Properties panel. It is a child of .canvas-wrapper, outside the
-// zoom transform, docked at the top inline-start corner (canvas controls are inline-end, the card
-// menu bottom centre). Narrow canvases get a bottom sheet instead.
-.mkls-property-panel {
+// Claude (LLM agent): persistent canvas menu. It is a child of .canvas-wrapper, outside the zoom
+// transform, docked at the top inline-start corner (canvas controls are inline-end, the card menu
+// bottom centre). Narrow canvases get a bottom sheet instead. The Properties section sits below the
+// bar and scrolls on its own.
+.mkls-canvas-menu {
   position: absolute; z-index: var(--layer-cover);
   top: var(--size-4-2); inset-inline-start: var(--size-4-2);
   width: min(320px, calc(100% - 2 * var(--size-4-2)));
@@ -30,19 +30,51 @@
     top: auto; inset-inline: var(--size-4-2); bottom: 64px;
     width: auto; max-height: 45%;
   }
-  &.is-collapsed { max-height: none; width: auto; max-width: min(320px, calc(100% - 2 * var(--size-4-2))); }
 
   button:not(.clickable-icon) { font-size: var(--font-ui-smaller); height: auto; padding: var(--size-2-2) var(--size-4-2); }
   input[type="text"], input[type="date"], textarea, select { font-size: var(--font-ui-small); }
 }
-.is-phone .mkls-property-panel[data-layout="sheet"] { bottom: 0; inset-inline: 0; border-radius: var(--radius-m) var(--radius-m) 0 0; }
+.is-phone .mkls-canvas-menu[data-layout="sheet"] { bottom: 0; inset-inline: 0; border-radius: var(--radius-m) var(--radius-m) 0 0; }
 
+.mkls-canvas-menu-bar {
+  display: flex; align-items: center; gap: var(--size-2-2);
+  padding: var(--size-2-2) var(--size-2-3);
+  border-bottom: 1px solid var(--background-modifier-border);
+  .mkls-canvas-menu & button:not(.clickable-icon) {
+    display: flex; align-items: center; gap: var(--size-2-2);
+    background: none; box-shadow: none; border: none; color: var(--text-muted);
+    padding: var(--size-2-2) var(--size-2-3);
+    &:hover:not(:disabled) { background-color: var(--background-modifier-hover); color: var(--text-normal); }
+    &:disabled { opacity: 0.5; cursor: default; }
+    &.mkls-canvas-menu-view { color: var(--text-normal); }
+  }
+}
+.mkls-canvas-menu-icon { display: flex; --icon-size: var(--icon-s); }
+.mkls-canvas-menu-view {
+  flex: 1 1 auto; min-width: 0; justify-content: flex-start;
+  &.is-filtered .mkls-canvas-menu-icon { color: var(--text-accent); }
+}
+.mkls-canvas-menu-view-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--font-semibold); }
+.mkls-canvas-menu-caret { display: flex; color: var(--text-faint); --icon-size: var(--icon-xs); }
+.mkls-canvas-menu-button { flex: 0 0 auto; }
+.mkls-canvas-menu-count {
+  min-width: 1.4em; padding: 0 var(--size-2-1); border-radius: var(--radius-s);
+  background-color: var(--background-modifier-hover); color: var(--text-muted);
+  font-size: var(--font-ui-smaller); text-align: center;
+}
+.mkls-canvas-menu-warning { display: flex; color: var(--color-orange); --icon-size: var(--icon-xs); }
+.mkls-canvas-menu-section { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+
+.mkls-property-panel { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
 .mkls-property-panel-header {
   display: flex; align-items: center; gap: var(--size-2-2);
   padding: var(--size-2-2) var(--size-2-3);
   border-bottom: 1px solid var(--background-modifier-border);
   .is-collapsed > & { border-bottom: none; }
+  .is-empty > & { border-bottom: none; }
 }
+.mkls-property-selection-hint { .mkls-property-panel-body > & { padding: 0 var(--size-2-3); } }
+.is-empty > .mkls-property-panel-body { padding-top: 0; }
 .mkls-property-panel-toggle {
   flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: var(--size-2-3);
   background: none; box-shadow: none; border: none; padding: var(--size-2-2) var(--size-2-3); height: auto;
@@ -60,7 +92,7 @@
 }
 
 .mkls-property-panel-body {
-  overflow-y: auto; overscroll-behavior: contain;
+  overflow-y: auto; overscroll-behavior: contain; min-height: 0;
   padding: var(--size-4-2) var(--size-4-3) var(--size-4-3);
   display: flex; flex-direction: column; gap: var(--size-4-2);
   &:empty { display: none; }
@@ -121,4 +153,81 @@ textarea.mkls-property-input { min-height: 3.5em; resize: vertical; }
   width: 100%; min-height: 6em; max-height: 50vh; resize: vertical;
   font-family: var(--font-monospace); font-size: var(--font-ui-smaller); line-height: var(--line-height-normal);
   white-space: pre; overflow-wrap: normal; overflow-x: auto;
+}
+
+// Claude (LLM agent): relationship chooser shown at the drop point of a new connection.
+.mkls-relation-chooser {
+  position: fixed; z-index: var(--layer-menu);
+  width: max-content; min-width: 220px; max-width: min(340px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px); overflow-y: auto;
+  display: flex; flex-direction: column; gap: var(--size-2-3);
+  padding: var(--size-4-2);
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-l);
+  font-size: var(--font-ui-small);
+  button { font-size: var(--font-ui-smaller); height: auto; padding: var(--size-2-2) var(--size-4-2); }
+}
+.mkls-relation-chooser-title { font-weight: var(--font-semibold); }
+.mkls-relation-chooser-ends { display: flex; align-items: center; gap: var(--size-2-2); color: var(--text-muted); min-width: 0; }
+.mkls-relation-chooser-end { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mkls-relation-chooser-arrow { display: flex; flex: 0 0 auto; color: var(--text-faint); --icon-size: var(--icon-xs); }
+.mkls-relation-chooser-list { display: flex; flex-direction: column; gap: 1px; }
+.mkls-relation-chooser .mkls-relation-choice {
+  display: flex; align-items: flex-start; gap: var(--size-4-2); width: 100%;
+  justify-content: flex-start; text-align: start;
+  background: none; box-shadow: none; border: none; color: var(--text-normal);
+  padding: var(--size-2-3) var(--size-4-2);
+  &:hover, &:focus-visible, &[aria-selected="true"] { background-color: var(--background-modifier-hover); }
+}
+.mkls-relation-choice-key {
+  flex: 0 0 auto; min-width: 1.4em; border-radius: var(--radius-s);
+  background-color: var(--background-modifier-border); color: var(--text-muted);
+  font-family: var(--font-monospace); text-align: center;
+}
+.mkls-relation-choice-text { display: flex; flex-direction: column; min-width: 0; }
+.mkls-relation-choice-type { font-size: var(--font-ui-small); font-weight: var(--font-medium); overflow-wrap: anywhere; white-space: normal; }
+.mkls-relation-choice-rule { color: var(--text-faint); white-space: normal; overflow-wrap: anywhere; }
+.mkls-relation-chooser-note { color: var(--text-faint); font-size: var(--font-ui-smaller); }
+.mkls-relation-chooser-footer { display: flex; flex-wrap: wrap; gap: var(--size-4-2); justify-content: flex-end; }
+
+// Claude (LLM agent): relationship rules editor; each rule reads as a sentence of chip lists.
+.mkls-relation-rules { display: flex; flex-direction: column; gap: var(--size-4-3); }
+.mkls-relation-rules-heading { margin-bottom: var(--size-4-2); }
+.mkls-relation-rules-empty { color: var(--text-muted); }
+.mkls-relation-rule {
+  display: flex; flex-direction: column; gap: var(--size-4-2);
+  padding: var(--size-4-3); border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m);
+}
+.mkls-relation-rule-header { display: flex; align-items: center; gap: var(--size-4-2); }
+.mkls-relation-rule-name { flex: 1 1 auto; }
+.mkls-relation-rule-body { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--size-4-2) var(--size-4-3); align-items: start; }
+.mkls-relation-rule-line { display: contents; }
+.mkls-relation-rule-label { color: var(--text-muted); line-height: var(--input-height); }
+.mkls-relation-chips {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--size-2-2);
+  min-height: var(--input-height); padding: var(--size-2-1) var(--size-2-3);
+  border: var(--input-border-width) solid var(--background-modifier-border); border-radius: var(--input-radius);
+  background-color: var(--background-modifier-form-field); cursor: text;
+  &:focus-within { box-shadow: 0 0 0 2px var(--background-modifier-border-focus); }
+}
+.mkls-relation-chip {
+  display: inline-flex; align-items: center; gap: var(--size-2-1);
+  padding: 0 var(--size-2-1) 0 var(--size-2-3); border-radius: var(--radius-s);
+  background-color: var(--background-modifier-hover); white-space: nowrap;
+}
+.mkls-relation-chips .mkls-relation-chip-remove {
+  display: flex; padding: 0; height: auto; background: none; box-shadow: none; border: none; color: var(--text-faint);
+  --icon-size: var(--icon-xs);
+  &:hover { color: var(--text-normal); }
+}
+.mkls-relation-chips .mkls-relation-chip-input {
+  flex: 1 1 8em; min-width: 8em; border: none; background: none; box-shadow: none; padding: 0; height: calc(var(--input-height) - 6px);
+  &:focus { box-shadow: none; }
+}
+.mkls-relation-rule-summary { color: var(--text-muted); font-size: var(--font-ui-smaller); }
+.mkls-relation-rules-error { color: var(--text-error); &:empty { display: none; } }
+@media (max-width: 480px) {
+  .mkls-relation-rule-body { grid-template-columns: minmax(0, 1fr); gap: var(--size-2-2); }
 }

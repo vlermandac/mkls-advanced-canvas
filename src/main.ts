@@ -2,6 +2,7 @@
 import { Plugin, Notice, requireApiVersion, TextFileView } from 'obsidian'
 import PropertyGraphCanvasExtension from './canvas-extensions/property-graph-canvas-extension'
 import PropertySchemaCanvasExtension from './canvas-extensions/property-schema-canvas-extension'
+import RelationshipRulesCanvasExtension from './canvas-extensions/relationship-rules-canvas-extension'
 import { Canvas, CanvasView } from './@types/Canvas'
 import type { CanvasData } from './@types/AdvancedJsonCanvas'
 import { canonicalHistory } from './utils/canonical-history'
@@ -122,6 +123,7 @@ const CANVAS_EXTENSIONS: CanvasExtensionConstructor[] = [
   ReadingModeFixCanvasExtension,
   PropertyGraphCanvasExtension,
   PropertySchemaCanvasExtension,
+  RelationshipRulesCanvasExtension,
   GroupCanvasExtension,
   NodeTemplatesCanvasExtension,
   VariableBreakpointCanvasExtension,
@@ -186,6 +188,10 @@ export default class AdvancedCanvasPlugin extends Plugin {
       if (this.canvasExtensions) {
         try { this.canvasExtensions.find((extension): extension is PropertyGraphCanvasExtension => extension instanceof PropertyGraphCanvasExtension)?.prepareUnload() }
         catch (error) { console.error('Unable to flush property editors on unload', error) }
+        try {
+          this.canvasExtensions.find((extension): extension is RelationshipRulesCanvasExtension => extension instanceof RelationshipRulesCanvasExtension)?.prepareUnload()
+          this.patchers.find((patcher): patcher is CanvasPatcher => patcher instanceof CanvasPatcher)?.prepareUnload()
+        } catch (error) { console.error('Unable to cancel provisional connections on unload', error) }
         for (const canvas of this.getCanvases()) {
           try {
             const transform = (data: CanvasData) => this.app.workspace.trigger('advanced-canvas:data-requested', canvas, data)

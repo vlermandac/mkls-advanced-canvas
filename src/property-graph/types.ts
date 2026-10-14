@@ -26,7 +26,16 @@ export interface SchemaField {
 }
 export interface ElementSchema { fields: SchemaField[]; allowAdditional: boolean; [key: string]: unknown }
 export interface CanvasPropertySchema { version: 1; nodes: ElementSchema; edges: ElementSchema; [key: string]: unknown }
-export interface GraphConfiguration { version: 1; views: SavedView[]; schema?: CanvasPropertySchema }
+export interface RelationshipRule {
+  id: string; name?: string; from: string[]; to: string[]; relations: string[]
+  [key: string]: unknown
+}
+export interface RelationshipGuidance {
+  version: 1; nodeTypeKey: string; edgeTypeKey: string; rules: RelationshipRule[]
+  [key: string]: unknown
+}
+export interface RelationChoice { type: string; ruleIds: string[]; ruleNames: string[] }
+export interface GraphConfiguration { version: 1; views: SavedView[]; schema?: CanvasPropertySchema; relationships?: RelationshipGuidance }
 export interface Visibility { nodes: Set<string>; edges: Set<string> }
 // Null denotes malformed property YAML. An empty mapping denotes no properties.
 export type PropertyLookup = (element: GraphElement) => PropertyMap | null

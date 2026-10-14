@@ -60,6 +60,8 @@ export interface CustomWorkspaceEvents {
   'advanced-canvas:edge-connection-dragging:before': (canvas: Canvas, edge: CanvasEdge, event: PointerEvent, newEdge: boolean, side: 'from' | 'to', previousEnds?: { from: CanvasEdgeEnd, to: CanvasEdgeEnd }) => void
   /** Fired after an edge gets dragged */
   'advanced-canvas:edge-connection-dragging:after': (canvas: Canvas, edge: CanvasEdge, event: PointerEvent, newEdge: boolean, side: 'from' | 'to', previousEnds?: { from: CanvasEdgeEnd, to: CanvasEdgeEnd }) => void
+  // Codex (LLM agent): claim a new connection before native save/history.
+  'advanced-canvas:new-connection-drop:before': (canvas: Canvas, edge: CanvasEdge, event: PointerEvent, control: { handled: boolean }) => void
   /** Fired when a node gets deleted */
   'advanced-canvas:node-removed': (canvas: Canvas, node: CanvasNode) => void
   /** Fired when an edge gets deleted */

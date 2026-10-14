@@ -1,14 +1,14 @@
 # Advanced Canvas property graph fork implementation plan
 
-Status: Development build 7.1.0-mkls.2 adds custom canvas schemas and improved property editing to the completed property/view foundation. Type/lint/build checks and one QA visual inspection are complete. The own-fork draft PR remains open; mkls.1 performance evidence is retained, with no new stress runs.
+Status: Development build 7.1.0-mkls.3 adds the persistent canvas menu and advisory relationship rules/creation. Type/lint/build checks pass. Native visual inspection is pending because the running Obsidian CLI socket pathname is absent; the shared app was not restarted. The own-fork draft PR remains open; mkls.1 performance evidence is retained, with no new stress runs.
 
-Updated: 2026-10-13.
+Updated: 2026-10-14.
 
-Maintainer: Codex, the main MKLS agent. Claude supports source and performance research through the existing Herdr `mkls` session. This plan is authored by an LLM agent and will be updated as tasks, decisions and evidence change.
+Maintainer: Codex, the main MKLS agent. Claude owns the property/menu UI and supports research through the existing Herdr `mkls` session. This plan is authored by an LLM agent and will be updated as tasks, decisions and evidence change.
 
 Build our own maintained fork of Advanced Canvas with properties on every node and edge, YAML frontmatter available during editing and hidden in rendered content, and persistent views that filter the displayed graph by those properties. Investigate and measure the work needed for large canvases. Reuse the property and filter foundations for later querying and bulk updates.
 
-The user authorized implementation alongside Claude on 2026-10-12. UI design remains deferred. Required editing, filtering and rendering behavior is implemented using minimal native controls.
+The user authorized implementation alongside Claude on 2026-10-12, property UI improvements on 2026-10-13, and the persistent menu/relationship UI on 2026-10-14. No Impeccable use. New stress tests remain excluded at the user’s request.
 
 ## Current baseline
 
@@ -17,7 +17,7 @@ The user authorized implementation alongside Claude on 2026-10-12. UI design rem
 | Upstream | [Developer-Mike/obsidian-advanced-canvas](https://github.com/Developer-Mike/obsidian-advanced-canvas) |
 | Local research checkout | `Advanced_Canvas/` |
 | Pinned commit | `4b8630c641bec6f6329adb8436a4d35752280d74` |
-| Upstream / fork version | 7.1.0 / 7.1.0-mkls.1 |
+| Upstream / fork version | 7.1.0 / 7.1.0-mkls.3 |
 | Minimum Obsidian version | 1.14.4 (tested floor) |
 | Implementation | TypeScript, esbuild, existing Canvas extensions and runtime patches |
 | Existing properties | Canvas-level `metadata.frontmatter`; text-node Markdown metadata is also indexed |
@@ -282,3 +282,22 @@ Shared contract/ownership: [schema and UI brief](SCHEMA_UI_BRIEF.md). UX finding
 Follow-up inspection: node and edge font settings match at16px in QA; the property dock stays outside canvas transforms and the toolbar moves beside it. A clean vault-scoped renderer reload removed stale listeners from an older plugin instance (cause unproven). Teardown now always invokes base cleanup even if editor flush fails. Visual scope and uninspected cases are stated in the UX report.
 
 Current package: `evidence/releases/final-7.1.0-mkls.2/mkls-advanced-canvas-7.1.0-mkls.2.zip`, with SHA256SUMS. Installed QA files and packaged production files match. [Schema guide](../docs/PROPERTY_GRAPH.md) and [two-node example](../examples/property-schema.canvas) document the new workflow.
+
+Follow-up committed and pushed: `da55f2d`; [draft PR#1](https://github.com/vlermandac/mkls-advanced-canvas/pull/1) updated. The living project plan and repository implementation/documentation are delivered; subsequent review or feature requests can extend the remaining roadmap.
+
+## Active follow-up: persistent menu and relationship guidance (2026-10-14)
+
+User assigned the UI to Claude and rules/creation to Codex. A persistent floating top-left menu contains schema, saved-view actions, relationship rules and the selected element properties. Rules are advisory, with natural endpoint-type patterns and an edge-type chooser during new connection creation; no enforcement of existing edges or manual property edits.
+
+- [x] R8.1 Agree the UI/core contract and exclusive ownership with Claude; preserve no-Impeccable/no-stress preferences.
+- [x] R8.2 Store versioned directed endpoint rules and configurable graph type property keys; match strings or string-list node types and union matching relation choices.
+- [x] R8.3 Add guarded undoable rule editing/removal, preserving schemas/views and unknown fields. Unsupported rule versions stay read-only.
+- [x] R8.4 Intercept native new-edge completion before saving/history. Provisional connections stay visible in filtered views but are excluded from canonical serialization/indexes until complete.
+- [x] R8.5 Offer choices for matching source/target types; selecting one creates the typed/labeled edge in one transaction, with schema defaults and editable drafts for missing required fields. Cancellation leaves no graph record; no-match/untyped/reconnect/blank-space paths retain native creation behavior.
+- [x] R8.6 Claude: persistent menu, view actions, natural rules modal and contextual relationship chooser, focus/cancel behavior and responsive layout.
+- [x] R8.7 Compile/lint/build, docs/example/package and own-fork draft PR update. No stress tests, benchmark or regression suites rerun.
+- [ ] R8.8 Native visual inspection of menu/rules/chooser after CLI access is restored. QA has the new files, but the running window still uses mkls.2. The absent CLI socket path prevents access; restarting the shared main process would also affect another open vault, so no restart was performed.
+
+Rules use committed per-element properties, separate from native JSON Canvas node types. Direction matters; reverse direction requires its own rule. This version models endpoint type patterns, not arbitrary executable logic or type-inheritance reasoning. Coordinate via [relation/menu brief](RELATION_MENU_BRIEF.md); UX notes in RELATION_MENU_UX.md.
+
+Development package: `evidence/releases/final-7.1.0-mkls.3/mkls-advanced-canvas-7.1.0-mkls.3.zip`, SHA-256 `cb3f3d43a30bf437082d62f2f3addd4c3845f12b8cbc00c015cbc2e4965f421e`. Packaged files match dist and the copied QA files. Native visual inspection remains R8.8; the running QA window has not loaded this build. Current usage and storage: [guide](../docs/PROPERTY_GRAPH.md); [example](../examples/relationship-guidance.canvas). Implementation continues on our own branch and [draft PR #1](https://github.com/vlermandac/mkls-advanced-canvas/pull/1).
